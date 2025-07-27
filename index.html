@@ -215,16 +215,16 @@
         // Global Firebase variables (provided by the Canvas environment)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         
-        let firebaseConfig = {};
-        try {
-            const configString = typeof __firebase_config !== 'undefined' ? `${__firebase_config}` : '{}';
-            firebaseConfig = JSON.parse(configString);
-            console.log("Firebase config parsed successfully.");
-        } catch (e) {
-            console.error("Error parsing __firebase_config. This might mean the provided config is not valid JSON:", e);
-            console.warn("Using default empty Firebase config due to parsing error.");
-            firebaseConfig = {};
-        }
+        // User-provided Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDNGaeo3jNhp5EImaZMBPEalq2ZvLw8XxQ",
+            authDomain: "task-tracker-f77f1.firebaseapp.com",
+            projectId: "task-tracker-f77f1",
+            storageBucket: "task-tracker-f77f1.firebasestorage.app",
+            messagingSenderId: "1096145801568",
+            appId: "1:1096145801568:web:7f35bab25471a555434e05", // Using the specific appId from your provided config
+            measurementId: "G-4T4829KXPH"
+        };
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -253,8 +253,8 @@
         // --- Firebase Initialization and Authentication ---
         async function initializeFirebase() {
             console.log("Attempting to initialize Firebase.");
-            console.log("App ID:", appId);
-            console.log("Firebase Config (parsed):", firebaseConfig);
+            console.log("App ID from environment:", appId); // Log the environment's appId
+            console.log("Firebase Config (used):", firebaseConfig); 
             console.log("Initial Auth Token present:", !!initialAuthToken);
 
             try {
@@ -273,17 +273,12 @@
                         statusMessage.textContent = "App ready! User: " + currentUserId.substring(0, 8) + "...";
                         listenForTasks();
                     } else {
-                        console.log("onAuthStateChanged: No user detected. Attempting sign-in.");
-                        statusMessage.textContent = "Authenticating...";
+                        console.log("onAuthStateChanged: No user detected. Attempting anonymous sign-in.");
+                        statusMessage.textContent = "Authenticating anonymously...";
                         try {
-                            if (initialAuthToken) {
-                                console.log("onAuthStateChanged: Signing in with custom token.");
-                                await signInWithCustomToken(auth, initialAuthToken);
-                            } else {
-                                console.log("onAuthStateChanged: Signing in anonymously.");
-                                await signInAnonymously(auth);
-                            }
-                            console.log("onAuthStateChanged: Sign-in attempt completed.");
+                            // Always attempt anonymous sign-in for static pages
+                            await signInAnonymously(auth);
+                            console.log("onAuthStateChanged: Anonymous sign-in attempt completed.");
                         } catch (authError) {
                             console.error("onAuthStateChanged: Authentication error:", authError);
                             statusMessage.textContent = "Authentication failed!";
@@ -306,6 +301,7 @@
                 return;
             }
 
+            // Ensure the collection path uses the correct appId from the environment
             const tasksCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/tasks`);
             console.log("Setting up Firestore real-time listener for path:", `artifacts/${appId}/users/${currentUserId}/tasks`);
 
@@ -394,7 +390,14 @@
                 console.log("UI updated with tasks.");
             }, (error) => {
                 console.error("Error listening to tasks:", error);
-                statusMessage.textContent = "Error loading tasks!";
+                // Check for specific permission error
+                if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
+                    statusMessage.textContent = "Error: Permission denied! Check Firestore Rules.";
+                    console.error("Firestore Permission Error: Please ensure your Firestore Security Rules allow read/write access for authenticated users to your task collection.");
+                    console.error("Example Rule: allow read, write: if request.auth != null && request.auth.uid == userId;");
+                } else {
+                    statusMessage.textContent = "Error loading tasks!";
+                }
             });
         }
 
