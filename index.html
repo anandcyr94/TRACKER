@@ -20,7 +20,7 @@
         }
         .task-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Align items to the start (top) for better visual flow */
             justify-content: space-between;
             padding: 0.75rem 1rem;
             margin-bottom: 0.5rem;
@@ -43,10 +43,14 @@
             flex-grow: 1;
             margin-right: 1rem;
             word-break: break-word;
+            display: flex; /* Use flex for internal stacking */
+            flex-direction: column; /* Stack text, deadline, notes vertically */
+            align-items: flex-start; /* Align content within task-content to the start */
         }
         .task-text {
             font-size: 1.125rem;
             color: #1f2937;
+            line-height: 1.4; /* Improve readability for multi-line text */
         }
         .task-deadline {
             font-size: 0.875rem;
@@ -62,6 +66,8 @@
             border-radius: 0.375rem;
             border: 1px solid #e5e7eb;
             white-space: pre-wrap;
+            width: 100%; /* Ensure notes take full width within content area */
+            box-sizing: border-box; /* Include padding/border in width */
         }
         .task-category {
             font-size: 0.75rem;
@@ -72,12 +78,14 @@
             margin-left: 0.5rem;
             font-weight: 600;
             text-transform: uppercase;
+            align-self: flex-start; /* Align category tag to the start of its flex container */
         }
         .task-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-top: 0.5rem;
+            align-self: flex-end; /* Align buttons to the end (right) */
         }
         .task-actions button {
             padding: 0.4rem 0.8rem;
@@ -222,7 +230,7 @@
             projectId: "task-tracker-f77f1",
             storageBucket: "task-tracker-f77f1.firebasestorage.app",
             messagingSenderId: "1096145801568",
-            appId: "1:1096145801568:web:7f35bab25471a555434e05", // Using the specific appId from your provided config
+            appId: "1:1096145801568:web:7f35bab25471a555434e05", // Your specific Firebase App ID
             measurementId: "G-4T4829KXPH"
         };
 
@@ -231,7 +239,7 @@
         let app;
         let db;
         let auth;
-        let currentUserId = null;
+        let currentUserId = null; // This will now represent the anonymous user ID for the session
         let authReady = false;
 
         // Get references to DOM elements
@@ -253,9 +261,9 @@
         // --- Firebase Initialization and Authentication ---
         async function initializeFirebase() {
             console.log("Attempting to initialize Firebase.");
-            console.log("App ID from environment:", appId); // Log the environment's appId
+            console.log("App ID from environment (if available):", appId); 
             console.log("Firebase Config (used):", firebaseConfig); 
-            console.log("Initial Auth Token present:", !!initialAuthToken);
+            console.log("Initial Auth Token present (if available):", !!initialAuthToken);
 
             try {
                 app = initializeApp(firebaseConfig);
@@ -266,17 +274,17 @@
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        currentUserId = user.uid;
+                        currentUserId = user.uid; // Store the authenticated user's UID
                         userIdDisplay.textContent = currentUserId;
                         authReady = true;
                         console.log("onAuthStateChanged: User authenticated. UID:", currentUserId);
                         statusMessage.textContent = "App ready! User: " + currentUserId.substring(0, 8) + "...";
-                        listenForTasks();
+                        listenForTasks(); // Start listening for tasks once authenticated
                     } else {
                         console.log("onAuthStateChanged: No user detected. Attempting anonymous sign-in.");
                         statusMessage.textContent = "Authenticating anonymously...";
                         try {
-                            // Always attempt anonymous sign-in for static pages
+                            // Always attempt anonymous sign-in for static pages to get a UID
                             await signInAnonymously(auth);
                             console.log("onAuthStateChanged: Anonymous sign-in attempt completed.");
                         } catch (authError) {
@@ -301,9 +309,9 @@
                 return;
             }
 
-            // Ensure the collection path uses the correct appId from the environment
-            const tasksCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/tasks`);
-            console.log("Setting up Firestore real-time listener for path:", `artifacts/${appId}/users/${currentUserId}/tasks`);
+            // Changed collection path to a public one for syncing across all users
+            const tasksCollectionRef = collection(db, `artifacts/${appId}/public/data/tasks`);
+            console.log("Setting up Firestore real-time listener for public path:", `artifacts/${appId}/public/data/tasks`);
 
             onSnapshot(tasksCollectionRef, (snapshot) => {
                 console.log("Firestore snapshot received. Number of documents:", snapshot.size);
@@ -315,7 +323,6 @@
                     tasks.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Sort tasks by creation time if available, otherwise by text
                 tasks.sort((a, b) => {
                     if (a.createdAt && b.createdAt) {
                         return a.createdAt.toDate() - b.createdAt.toDate();
@@ -323,12 +330,11 @@
                     return a.text.localeCompare(b.text);
                 });
 
-                // Group tasks by category
                 const dailyTasksByCategory = {};
                 const pendingTasksByCategory = {};
 
                 tasks.forEach(taskData => {
-                    const category = taskData.category || 'General'; // Default to General if not set
+                    const category = taskData.category || 'General';
                     if (taskData.isDaily) {
                         if (!dailyTasksByCategory[category]) {
                             dailyTasksByCategory[category] = [];
@@ -342,11 +348,10 @@
                     }
                 });
 
-                // Render Daily Tasks by Category
                 const sortedDailyCategories = Object.keys(dailyTasksByCategory).sort();
                 sortedDailyCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-blue-400');
+                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-blue-400', 'flex', 'items-center');
                     categoryHeader.textContent = category;
                     dailyTasksList.appendChild(categoryHeader);
 
@@ -364,11 +369,10 @@
                     });
                 });
 
-                // Render Pending Tasks by Category
                 const sortedPendingCategories = Object.keys(pendingTasksByCategory).sort();
                 sortedPendingCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-red-400');
+                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-red-400', 'flex', 'items-center');
                     categoryHeader.textContent = category;
                     pendingTasksList.appendChild(categoryHeader);
 
@@ -390,11 +394,10 @@
                 console.log("UI updated with tasks.");
             }, (error) => {
                 console.error("Error listening to tasks:", error);
-                // Check for specific permission error
                 if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
                     statusMessage.textContent = "Error: Permission denied! Check Firestore Rules.";
-                    console.error("Firestore Permission Error: Please ensure your Firestore Security Rules allow read/write access for authenticated users to your task collection.");
-                    console.error("Example Rule: allow read, write: if request.auth != null && request.auth.uid == userId;");
+                    console.error("Firestore Permission Error: Please ensure your Firestore Security Rules allow read/write access for authenticated users to the public task collection.");
+                    console.error("Example Rule: allow read, write: if request.auth != null;");
                 } else {
                     statusMessage.textContent = "Error loading tasks!";
                 }
@@ -542,7 +545,8 @@
             }
 
             try {
-                const tasksCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/tasks`);
+                // Changed collection path to a public one
+                const tasksCollectionRef = collection(db, `artifacts/${appId}/public/data/tasks`);
                 const docRef = await addDoc(tasksCollectionRef, {
                     text: taskText,
                     deadline: taskDeadline,
@@ -567,7 +571,8 @@
         async function toggleComplete(taskItem) {
             if (!authReady || !taskItem.dataset.docId) return;
 
-            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+            // Changed collection path to a public one
+            const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, taskItem.dataset.docId);
             const isCompleted = taskItem.dataset.completed === 'true';
 
             try {
@@ -584,7 +589,8 @@
         async function moveTask(taskItem) {
             if (!authReady || !taskItem.dataset.docId) return;
 
-            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+            // Changed collection path to a public one
+            const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, taskItem.dataset.docId);
             const isDaily = taskItem.dataset.daily === 'true';
 
             try {
@@ -601,7 +607,8 @@
         async function deleteTask(taskItem) {
             if (!authReady || !taskItem.dataset.docId) return;
 
-            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+            // Changed collection path to a public one
+            const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, taskItem.dataset.docId);
 
             try {
                 await deleteDoc(docRef);
@@ -632,7 +639,8 @@
                 return;
             }
 
-            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, currentTaskItemForNotes.dataset.docId);
+            // Changed collection path to a public one
+            const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, currentTaskItemForNotes.dataset.docId);
             const newNotes = editNotesTextarea.value.trim();
 
             try {
@@ -640,7 +648,7 @@
                     notes: newNotes
                 });
                 console.log("saveNotes: Notes updated for ID:", currentTaskItemForNotes.dataset.docId);
-            } catch (error) {
+            }  catch (error) {
                 console.error("saveNotes: Error saving notes: ", error);
                 alert("Failed to save notes. See console for details.");
             } finally {
@@ -676,3 +684,4 @@
     </script>
 </body>
 </html>
+
