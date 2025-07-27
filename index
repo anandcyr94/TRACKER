@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Minimal Modern Background: Subtle linear gradient */
+            background: linear-gradient(to right bottom, #e0f7fa, #c8e6c9); /* Light blues and greens */
+            min-height: 100vh; /* Ensure it covers the full viewport height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem; /* Add some padding around the main content */
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            transition: all 0.2s ease-in-out;
+            flex-wrap: wrap;
+        }
+        .task-item.completed {
+            background-color: #e0f2f7; /* Light blue for completed tasks */
+            text-decoration: line-through;
+            color: #6b7280;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+        }
+        .task-content {
+            flex-grow: 1;
+            margin-right: 1rem;
+            word-break: break-word;
+        }
+        .task-text {
+            font-size: 1.125rem;
+            color: #1f2937;
+        }
+        .task-deadline {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        .task-notes {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-top: 0.5rem;
+            background-color: #f9fafb;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+            white-space: pre-wrap;
+        }
+        .task-category {
+            font-size: 0.75rem;
+            color: #4f46e5;
+            background-color: #e0e7ff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            margin-left: 0.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .task-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .task-actions button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .task-actions button:hover {
+            opacity: 0.9;
+        }
+        /* Custom modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+            width: 90%;
+            max-width: 500px;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">My Task Board</h1>
+
+        <!-- User ID Display -->
+        <div class="text-center text-sm text-gray-500 mb-2">
+            User ID: <span id="userIdDisplay" class="font-mono text-gray-700">Loading...</span>
+        </div>
+        <!-- Status Message -->
+        <div id="statusMessage" class="text-center text-sm text-blue-600 mb-4">
+            Initializing app...
+        </div>
+
+        <!-- Task Input Section -->
+        <div class="mb-8 flex flex-col sm:flex-row gap-4 flex-wrap">
+            <input type="text" id="newTaskInput" placeholder="Add a new task..."
+                   class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
+            <input type="date" id="taskDeadlineInput"
+                   class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
+            <select id="taskCategoryInput"
+                    class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
+                <option value="General">General</option>
+                <option value="AP-FT">AP-FT</option>
+                <option value="REC">REC</option>
+                <option value="Upwork">Upwork</option>
+                <option value="Bambio">Bambio</option>
+                <option value="Personal">Personal</option>
+                <option value="Other">Other</option>
+                <option value="PhD-Anand">PhD-Anand</option>
+            </select>
+            <button id="addTaskBtn"
+                    class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out shadow-md">
+                Add Task
+            </button>
+        </div>
+
+        <!-- Task Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Daily Tasks Section -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                    Daily Tasks
+                    <svg class="ml-2 w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path>
+                    </svg>
+                </h2>
+                <div id="dailyTasksList" class="space-y-3">
+                    <!-- Daily tasks will be appended here -->
+                </div>
+                <p id="noDailyTasks" class="text-gray-500 text-center mt-4 hidden">No daily tasks yet!</p>
+            </div>
+
+            <!-- Pending Tasks Section -->
+            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                    Pending Tasks
+                    <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.3 2.671-1.3 3.436 0L14.46 8.13c.636 1.077-.117 2.404-1.309 2.404H6.849c-1.192 0-1.945-1.327-1.31-2.404L8.257 3.099zM10 14a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                    </svg>
+                </h2>
+                <div id="pendingTasksList" class="space-y-3">
+                    <!-- Pending tasks will be appended here -->
+                </div>
+                <p id="noPendingTasks" class="text-gray-500 text-center mt-4 hidden">No pending tasks yet!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Edit Modal -->
+    <div id="notesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="window.closeNotesModal()">&times;</span>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Edit Notes</h3>
+            <textarea id="editNotesTextarea" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 resize-y h-40 mb-4"></textarea>
+            <button onclick="window.saveNotes()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out shadow-md">
+                Save Notes
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDK Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables (provided by the Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        let firebaseConfig = {};
+        try {
+            const configString = typeof __firebase_config !== 'undefined' ? `${__firebase_config}` : '{}';
+            firebaseConfig = JSON.parse(configString);
+            console.log("Firebase config parsed successfully.");
+        } catch (e) {
+            console.error("Error parsing __firebase_config. This might mean the provided config is not valid JSON:", e);
+            console.warn("Using default empty Firebase config due to parsing error.");
+            firebaseConfig = {};
+        }
+
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app;
+        let db;
+        let auth;
+        let currentUserId = null;
+        let authReady = false;
+
+        // Get references to DOM elements
+        const newTaskInput = document.getElementById('newTaskInput');
+        const taskDeadlineInput = document.getElementById('taskDeadlineInput');
+        const taskCategoryInput = document.getElementById('taskCategoryInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const dailyTasksList = document.getElementById('dailyTasksList');
+        const pendingTasksList = document.getElementById('pendingTasksList');
+        const noDailyTasksMessage = document.getElementById('noDailyTasks');
+        const noPendingTasksMessage = document.getElementById('noPendingTasks');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const statusMessage = document.getElementById('statusMessage');
+
+        const notesModal = document.getElementById('notesModal');
+        const editNotesTextarea = document.getElementById('editNotesTextarea');
+        let currentTaskItemForNotes = null;
+
+        // --- Firebase Initialization and Authentication ---
+        async function initializeFirebase() {
+            console.log("Attempting to initialize Firebase.");
+            console.log("App ID:", appId);
+            console.log("Firebase Config (parsed):", firebaseConfig);
+            console.log("Initial Auth Token present:", !!initialAuthToken);
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                console.log("Firebase app, db, auth initialized.");
+                statusMessage.textContent = "Authenticating...";
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        userIdDisplay.textContent = currentUserId;
+                        authReady = true;
+                        console.log("onAuthStateChanged: User authenticated. UID:", currentUserId);
+                        statusMessage.textContent = "App ready! User: " + currentUserId.substring(0, 8) + "...";
+                        listenForTasks();
+                    } else {
+                        console.log("onAuthStateChanged: No user detected. Attempting sign-in.");
+                        statusMessage.textContent = "Authenticating...";
+                        try {
+                            if (initialAuthToken) {
+                                console.log("onAuthStateChanged: Signing in with custom token.");
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                console.log("onAuthStateChanged: Signing in anonymously.");
+                                await signInAnonymously(auth);
+                            }
+                            console.log("onAuthStateChanged: Sign-in attempt completed.");
+                        } catch (authError) {
+                            console.error("onAuthStateChanged: Authentication error:", authError);
+                            statusMessage.textContent = "Authentication failed!";
+                            userIdDisplay.textContent = "Auth Error";
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error during Firebase initialization or auth setup:", error);
+                userIdDisplay.textContent = "Init Error";
+                statusMessage.textContent = "Initialization failed!";
+            }
+        }
+
+        // --- Firestore Real-time Listener ---
+        function listenForTasks() {
+            if (!db || !currentUserId) {
+                console.warn("Firestore or User ID not ready for listening. Cannot set up snapshot listener.");
+                return;
+            }
+
+            const tasksCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/tasks`);
+            console.log("Setting up Firestore real-time listener for path:", `artifacts/${appId}/users/${currentUserId}/tasks`);
+
+            onSnapshot(tasksCollectionRef, (snapshot) => {
+                console.log("Firestore snapshot received. Number of documents:", snapshot.size);
+                dailyTasksList.innerHTML = '';
+                pendingTasksList.innerHTML = '';
+
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort tasks by creation time if available, otherwise by text
+                tasks.sort((a, b) => {
+                    if (a.createdAt && b.createdAt) {
+                        return a.createdAt.toDate() - b.createdAt.toDate();
+                    }
+                    return a.text.localeCompare(b.text);
+                });
+
+                // Group tasks by category
+                const dailyTasksByCategory = {};
+                const pendingTasksByCategory = {};
+
+                tasks.forEach(taskData => {
+                    const category = taskData.category || 'General'; // Default to General if not set
+                    if (taskData.isDaily) {
+                        if (!dailyTasksByCategory[category]) {
+                            dailyTasksByCategory[category] = [];
+                        }
+                        dailyTasksByCategory[category].push(taskData);
+                    } else {
+                        if (!pendingTasksByCategory[category]) {
+                            pendingTasksByCategory[category] = [];
+                        }
+                        pendingTasksByCategory[category].push(taskData);
+                    }
+                });
+
+                // Render Daily Tasks by Category
+                const sortedDailyCategories = Object.keys(dailyTasksByCategory).sort();
+                sortedDailyCategories.forEach(category => {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-blue-400');
+                    categoryHeader.textContent = category;
+                    dailyTasksList.appendChild(categoryHeader);
+
+                    dailyTasksByCategory[category].forEach(taskData => {
+                        const taskItem = createTaskElement(
+                            taskData.text,
+                            taskData.deadline,
+                            taskData.notes,
+                            taskData.category,
+                            taskData.isDaily,
+                            taskData.isCompleted,
+                            taskData.id
+                        );
+                        dailyTasksList.appendChild(taskItem);
+                    });
+                });
+
+                // Render Pending Tasks by Category
+                const sortedPendingCategories = Object.keys(pendingTasksByCategory).sort();
+                sortedPendingCategories.forEach(category => {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-red-400');
+                    categoryHeader.textContent = category;
+                    pendingTasksList.appendChild(categoryHeader);
+
+                    pendingTasksByCategory[category].forEach(taskData => {
+                        const taskItem = createTaskElement(
+                            taskData.text,
+                            taskData.deadline,
+                            taskData.notes,
+                            taskData.category,
+                            taskData.isDaily,
+                            taskData.isCompleted,
+                            taskData.id
+                        );
+                        pendingTasksList.appendChild(taskItem);
+                    });
+                });
+
+                updateNoTasksMessages();
+                console.log("UI updated with tasks.");
+            }, (error) => {
+                console.error("Error listening to tasks:", error);
+                statusMessage.textContent = "Error loading tasks!";
+            });
+        }
+
+        // --- UI Update Functions ---
+        function updateNoTasksMessages() {
+            noDailyTasksMessage.classList.toggle('hidden', dailyTasksList.children.length > 0);
+            noPendingTasksMessage.classList.toggle('hidden', pendingTasksList.children.length > 0);
+        }
+
+        // Function to create a new task element (UI only)
+        function createTaskElement(taskText, deadline = '', notes = '', category = 'General', isDaily = false, isCompleted = false, docId = null) {
+            const taskItem = document.createElement('div');
+            taskItem.classList.add('task-item');
+            if (isCompleted) {
+                taskItem.classList.add('completed');
+            }
+            taskItem.dataset.daily = isDaily;
+            taskItem.dataset.completed = isCompleted;
+            taskItem.dataset.deadline = deadline;
+            taskItem.dataset.notes = notes;
+            taskItem.dataset.category = category;
+            taskItem.dataset.docId = docId;
+
+            const taskContentDiv = document.createElement('div');
+            taskContentDiv.classList.add('task-content');
+
+            const taskSpan = document.createElement('span');
+            taskSpan.classList.add('task-text', 'block');
+            taskSpan.textContent = taskText;
+            taskContentDiv.appendChild(taskSpan);
+
+            if (deadline) {
+                const deadlineSpan = document.createElement('span');
+                deadlineSpan.classList.add('task-deadline', 'block');
+                const date = new Date(deadline + 'T00:00:00');
+                deadlineSpan.textContent = `Due: ${date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                taskContentDiv.appendChild(deadlineSpan);
+            }
+
+            if (category && category !== 'General') {
+                const categorySpan = document.createElement('span');
+                categorySpan.classList.add('task-category');
+                categorySpan.textContent = category;
+                taskContentDiv.appendChild(categorySpan);
+            }
+
+            const notesDisplayDiv = document.createElement('div');
+            notesDisplayDiv.classList.add('task-notes', 'hidden');
+            if (notes) {
+                notesDisplayDiv.textContent = notes;
+                notesDisplayDiv.classList.remove('hidden');
+            }
+            taskContentDiv.appendChild(notesDisplayDiv);
+
+            taskItem.appendChild(taskContentDiv);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.classList.add('task-actions', 'flex-shrink-0');
+
+            const completeBtn = document.createElement('button');
+            completeBtn.textContent = isCompleted ? 'Undo' : 'Complete';
+            completeBtn.classList.add(
+                isCompleted ? 'bg-yellow-500' : 'bg-green-500',
+                'text-white',
+                'hover:bg-green-600',
+                'hover:bg-yellow-600',
+                'focus:outline-none',
+                'focus:ring-2',
+                'focus:ring-offset-2',
+                'focus:ring-green-500'
+            );
+            completeBtn.onclick = () => toggleComplete(taskItem);
+            actionsDiv.appendChild(completeBtn);
+
+            const moveBtn = document.createElement('button');
+            moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
+            moveBtn.classList.add(
+                isDaily ? 'bg-purple-500' : 'bg-indigo-500',
+                'text-white',
+                'hover:bg-purple-600',
+                'hover:bg-indigo-600',
+                'focus:outline-none',
+                'focus:ring-2',
+                'focus:ring-offset-2',
+                'focus:ring-purple-500'
+            );
+            moveBtn.onclick = () => moveTask(taskItem);
+            actionsDiv.appendChild(moveBtn);
+
+            const editNotesBtn = document.createElement('button');
+            editNotesBtn.textContent = 'Edit Notes';
+            editNotesBtn.classList.add(
+                'bg-gray-500',
+                'text-white',
+                'hover:bg-gray-600',
+                'focus:outline-none',
+                'focus:ring-2',
+                'focus:ring-offset-2',
+                'focus:ring-gray-500'
+            );
+            editNotesBtn.onclick = () => openNotesModal(taskItem);
+            actionsDiv.appendChild(editNotesBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add(
+                'bg-red-500',
+                'text-white',
+                'hover:bg-red-600',
+                'focus:outline-none',
+                'focus:ring-2',
+                'focus:ring-offset-2',
+                'focus:ring-red-500'
+            );
+            deleteBtn.onclick = () => deleteTask(taskItem);
+            actionsDiv.appendChild(deleteBtn);
+
+            taskItem.appendChild(actionsDiv);
+            return taskItem;
+        }
+
+        // --- Firestore Data Operations ---
+
+        async function addTask() {
+            console.log("Attempting to add task...");
+            if (!authReady) {
+                console.error("addTask: Authentication not ready. Cannot add task.");
+                statusMessage.textContent = "App not ready. Please wait.";
+                alert("Please wait for the app to initialize.");
+                return;
+            }
+            console.log("addTask: Auth is ready. currentUserId:", currentUserId);
+
+            const taskText = newTaskInput.value.trim();
+            const taskDeadline = taskDeadlineInput.value;
+            const taskCategory = taskCategoryInput.value;
+            const taskNotes = '';
+
+            if (taskText === '') {
+                alert('Please enter a task!');
+                return;
+            }
+
+            try {
+                const tasksCollectionRef = collection(db, `artifacts/${appId}/users/${currentUserId}/tasks`);
+                const docRef = await addDoc(tasksCollectionRef, {
+                    text: taskText,
+                    deadline: taskDeadline,
+                    notes: taskNotes,
+                    category: taskCategory,
+                    isDaily: true,
+                    isCompleted: false,
+                    createdAt: serverTimestamp()
+                });
+                console.log("addTask: Document written with ID: ", docRef.id);
+                statusMessage.textContent = "Task added successfully!";
+                newTaskInput.value = '';
+                taskDeadlineInput.value = '';
+                taskCategoryInput.value = 'General';
+            } catch (error) {
+                console.error("addTask: Error adding document: ", error);
+                statusMessage.textContent = "Failed to add task!";
+                alert("Failed to add task. See console for details.");
+            }
+        }
+
+        async function toggleComplete(taskItem) {
+            if (!authReady || !taskItem.dataset.docId) return;
+
+            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+            const isCompleted = taskItem.dataset.completed === 'true';
+
+            try {
+                await updateDoc(docRef, {
+                    isCompleted: !isCompleted
+                });
+                console.log("toggleComplete: Task status updated for ID:", taskItem.dataset.docId);
+            } catch (error) {
+                console.error("Error updating document: ", error);
+                alert("Failed to update task status. See console for details.");
+            }
+        }
+
+        async function moveTask(taskItem) {
+            if (!authReady || !taskItem.dataset.docId) return;
+
+            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+            const isDaily = taskItem.dataset.daily === 'true';
+
+            try {
+                await updateDoc(docRef, {
+                    isDaily: !isDaily
+                });
+                console.log("moveTask: Task category updated for ID:", taskItem.dataset.docId);
+            } catch (error) {
+                console.error("Error moving document: ", error);
+                alert("Failed to move task. See console for details.");
+            }
+        }
+
+        async function deleteTask(taskItem) {
+            if (!authReady || !taskItem.dataset.docId) return;
+
+            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, taskItem.dataset.docId);
+
+            try {
+                await deleteDoc(docRef);
+                console.log("deleteTask: Task deleted for ID:", taskItem.dataset.docId);
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Failed to delete task. See console for details.");
+            }
+        }
+
+        // Functions for Notes Modal
+        window.openNotesModal = function(taskItem) {
+            currentTaskItemForNotes = taskItem;
+            editNotesTextarea.value = taskItem.dataset.notes || '';
+            notesModal.style.display = 'flex';
+            console.log("openNotesModal: Opening notes for task ID:", taskItem.dataset.docId);
+        }
+
+        window.closeNotesModal = function() {
+            notesModal.style.display = 'none';
+            currentTaskItemForNotes = null;
+            console.log("closeNotesModal: Notes modal closed.");
+        }
+
+        window.saveNotes = async function() {
+            if (!authReady || !currentTaskItemForNotes || !currentTaskItemForNotes.dataset.docId) {
+                console.warn("saveNotes: Authentication not ready or no task selected.");
+                return;
+            }
+
+            const docRef = doc(db, `artifacts/${appId}/users/${currentUserId}/tasks`, currentTaskItemForNotes.dataset.docId);
+            const newNotes = editNotesTextarea.value.trim();
+
+            try {
+                await updateDoc(docRef, {
+                    notes: newNotes
+                });
+                console.log("saveNotes: Notes updated for ID:", currentTaskItemForNotes.dataset.docId);
+            } catch (error) {
+                console.error("saveNotes: Error saving notes: ", error);
+                alert("Failed to save notes. See console for details.");
+            } finally {
+                closeNotesModal();
+            }
+        }
+
+        // --- Event Listeners ---
+        addTaskBtn.addEventListener('click', addTask);
+        newTaskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        taskDeadlineInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+        taskCategoryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === notesModal) {
+                closeNotesModal();
+            }
+        });
+
+        window.onload = initializeFirebase;
+    </script>
+</body>
+</html>
