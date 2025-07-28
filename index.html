@@ -97,40 +97,27 @@
         .task-actions button:hover {
             opacity: 0.9;
         }
-        /* Custom modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            justify-content: center;
+        /* Category Header Styling */
+        .category-header {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #4b5563; /* gray-700 */
+            margin-top: 1.5rem; /* mt-6 */
+            margin-bottom: 0.75rem; /* mb-3 */
+            padding-left: 0.5rem; /* pl-2 */
+            border-left: 4px solid; /* border-l-4 */
+            border-color: #60a5fa; /* blue-400, adjust for daily/pending */
+            display: flex;
             align-items: center;
         }
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
-            padding: 20px;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
-            width: 90%;
-            max-width: 500px;
+        .daily-category-border {
+            border-color: #60a5fa; /* blue-400 */
         }
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+        .pending-category-border {
+            border-color: #f87171; /* red-400 */
         }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
+        .all-category-border {
+            border-color: #9ca3af; /* gray-400 */
         }
     </style>
 </head>
@@ -264,10 +251,10 @@
         const addTaskBtn = document.getElementById('addTaskBtn');
         const dailyTasksList = document.getElementById('dailyTasksList');
         const pendingTasksList = document.getElementById('pendingTasksList');
-        const allTasksList = document.getElementById('allTasksList'); // New: All Tasks list
+        const allTasksList = document.getElementById('allTasksList');
         const noDailyTasksMessage = document.getElementById('noDailyTasks');
         const noPendingTasksMessage = document.getElementById('noPendingTasks');
-        const noAllTasksMessage = document.getElementById('noAllTasks'); // New: All Tasks message
+        const noAllTasksMessage = document.getElementById('noAllTasks');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const statusMessage = document.getElementById('statusMessage');
 
@@ -332,14 +319,13 @@
                 console.log("Firestore snapshot received. Number of documents:", snapshot.size);
                 dailyTasksList.innerHTML = '';
                 pendingTasksList.innerHTML = '';
-                allTasksList.innerHTML = ''; // Clear all tasks list
+                allTasksList.innerHTML = '';
 
                 const tasks = [];
                 snapshot.forEach(doc => {
                     tasks.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Sort tasks by creation time if available, otherwise by text
                 tasks.sort((a, b) => {
                     if (a.createdAt && b.createdAt) {
                         return a.createdAt.toDate() - b.createdAt.toDate();
@@ -347,18 +333,17 @@
                     return a.text.localeCompare(b.text);
                 });
 
-                // Get today's date in YYYY-MM-DD format for comparison
                 const today = new Date();
                 const todayFormatted = today.toISOString().split('T')[0];
 
                 const dailyTasksForTodayByCategory = {};
                 const pendingTasksByCategory = {};
-                const allTasksByCategory = {}; // For the new "All Tasks" dashboard
+                const allTasksByCategory = {};
 
                 tasks.forEach(taskData => {
                     const category = taskData.category || 'General';
 
-                    // Populate dailyTasksForTodayByCategory
+                    // Filter for Daily Tasks (Today)
                     if (taskData.isDaily && taskData.deadline === todayFormatted) {
                         if (!dailyTasksForTodayByCategory[category]) {
                             dailyTasksForTodayByCategory[category] = [];
@@ -366,7 +351,7 @@
                         dailyTasksForTodayByCategory[category].push(taskData);
                     }
                     
-                    // Populate pendingTasksByCategory
+                    // Filter for Pending Tasks (not daily)
                     if (!taskData.isDaily) {
                         if (!pendingTasksByCategory[category]) {
                             pendingTasksByCategory[category] = [];
@@ -374,7 +359,7 @@
                         pendingTasksByCategory[category].push(taskData);
                     }
 
-                    // Populate allTasksByCategory (all tasks, regardless of status or date)
+                    // All tasks for the "All Tasks" dashboard
                     if (!allTasksByCategory[category]) {
                         allTasksByCategory[category] = [];
                     }
@@ -385,7 +370,7 @@
                 const sortedDailyCategories = Object.keys(dailyTasksForTodayByCategory).sort();
                 sortedDailyCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-blue-400', 'flex', 'items-center');
+                    categoryHeader.classList.add('category-header', 'daily-category-border'); /* Use combined class */
                     categoryHeader.textContent = category;
                     dailyTasksList.appendChild(categoryHeader);
 
@@ -407,7 +392,7 @@
                 const sortedPendingCategories = Object.keys(pendingTasksByCategory).sort();
                 sortedPendingCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-red-400', 'flex', 'items-center');
+                    categoryHeader.classList.add('category-header', 'pending-category-border'); /* Use combined class */
                     categoryHeader.textContent = category;
                     pendingTasksList.appendChild(categoryHeader);
 
@@ -429,7 +414,7 @@
                 const sortedAllCategories = Object.keys(allTasksByCategory).sort();
                 sortedAllCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-4', 'mb-2', 'pl-2', 'border-l-4', 'border-gray-400', 'flex', 'items-center');
+                    categoryHeader.classList.add('category-header', 'all-category-border'); /* Use combined class */
                     categoryHeader.textContent = category;
                     allTasksList.appendChild(categoryHeader);
 
@@ -446,7 +431,6 @@
                         allTasksList.appendChild(taskItem);
                     });
                 });
-
 
                 updateNoTasksMessages();
                 console.log("UI updated with tasks.");
@@ -466,7 +450,7 @@
         function updateNoTasksMessages() {
             noDailyTasksMessage.classList.toggle('hidden', dailyTasksList.children.length > 0);
             noPendingTasksMessage.classList.toggle('hidden', pendingTasksList.children.length > 0);
-            noAllTasksMessage.classList.toggle('hidden', allTasksList.children.length > 0); // Update for all tasks
+            noAllTasksMessage.classList.toggle('hidden', allTasksList.children.length > 0);
         }
 
         // Function to create a new task element (UI only)
