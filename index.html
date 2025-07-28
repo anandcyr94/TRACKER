@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Task Tracker</title>
+    <title>Anand Tasks Board</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,8 +19,8 @@
         }
         .task-item {
             display: flex;
-            flex-direction: column; /* Stack content and actions vertically */
-            align-items: flex-start; /* Align content to the left */
+            flex-direction: column;
+            align-items: flex-start;
             padding: 0.75rem 1rem;
             margin-bottom: 0.5rem;
             background-color: #ffffff;
@@ -39,8 +39,8 @@
         }
         .task-content {
             flex-grow: 1;
-            width: 100%; /* Take full width to allow text wrapping */
-            margin-bottom: 0.5rem; /* Space between content and buttons */
+            width: 100%;
+            margin-bottom: 0.5rem;
             word-break: break-word;
             display: flex;
             flex-direction: column;
@@ -83,9 +83,9 @@
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            width: 100%; /* Take full width to align buttons */
-            justify-content: flex-end; /* Align buttons to the right */
-            margin-top: 0.5rem; /* Ensure space below content */
+            width: 100%;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
         }
         .task-actions button {
             padding: 0.4rem 0.8rem;
@@ -115,23 +115,40 @@
         .pending-category-border {
             border-color: #f87171;
         }
+        .completed-category-border {
+            border-color: #34d399;
+        }
         .all-category-border {
             border-color: #9ca3af;
         }
+        /* Dashboard Section Backgrounds for distinction */
+        #dailyTasksSection {
+            background-color: #e3f2fd; /* Light Blue */
+        }
+        #pendingTasksSection {
+            background-color: #ffebee; /* Light Red */
+        }
+        #completedTasksSection {
+            background-color: #e8f5e9; /* Light Green */
+        }
+        #allTasksSection {
+            background-color: #f5f5f5; /* Very Light Gray */
+        }
+
         /* Ensure input fields take full width on small screens */
         .mb-8 > .flex-grow {
             width: 100%;
         }
-        @media (min-width: 640px) { /* Tailwind's sm breakpoint */
+        @media (min-width: 640px) {
             .mb-8 > .flex-grow {
-                width: auto; /* Revert to auto on larger screens */
+                width: auto;
             }
         }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
-        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">My Task Board</h1>
+        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Anand Tasks Board</h1>
 
         <!-- User ID Display -->
         <div class="text-center text-sm text-gray-500 mb-2">
@@ -165,14 +182,23 @@
             </button>
         </div>
 
-        <!-- Task Categories -->
+        <!-- Export Button -->
+        <div class="mb-8 text-center">
+            <button id="exportTasksBtn"
+                    class="bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition duration-200 ease-in-out shadow-md">
+                Export All Tasks to CSV
+            </button>
+        </div>
+
+        <!-- Task Dashboards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Daily Tasks Section -->
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+            <div id="dailyTasksSection" class="p-6 rounded-lg shadow-inner">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
                     Daily Tasks (Today)
-                    <svg class="ml-2 w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6z" clip-rule="evenodd"></path>
+                    <!-- Modern Sun Icon -->
+                    <svg class="ml-2 w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 00-1.06-1.06l-1.59 1.59a.75.75 0 101.06 1.06l1.59-1.59zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V18a.75.75 0 01.75-.75zM5.656 17.344a.75.75 0 001.06-1.06l-1.59-1.59a.75.75 0 10-1.06 1.06l1.59 1.59zM3 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3.75A.75.75 0 013 12zM17.344 5.656a.75.75 0 00-1.06 1.06l1.59 1.59a.75.75 0 101.06-1.06l-1.59-1.59zM12 3a9 9 0 100 18 9 9 0 000-18z" />
                     </svg>
                 </h2>
                 <div id="dailyTasksList" class="space-y-3">
@@ -182,11 +208,12 @@
             </div>
 
             <!-- Pending Tasks Section -->
-            <div class="bg-gray-50 p-6 rounded-lg shadow-inner">
+            <div id="pendingTasksSection" class="p-6 rounded-lg shadow-inner">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
                     Pending Tasks
-                    <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.3 2.671-1.3 3.436 0L14.46 8.13c.636 1.077-.117 2.404-1.309 2.404H6.849c-1.192 0-1.945-1.327-1.31-2.404L8.257 3.099zM10 14a1 1 0 100-2 1 1 0 000 2zm0 2a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                    <!-- Modern Flag Icon -->
+                    <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v12zm0 0v2a2 2 0 002 2h3v-3H4z" />
                     </svg>
                 </h2>
                 <div id="pendingTasksList" class="space-y-3">
@@ -196,13 +223,28 @@
             </div>
         </div>
 
+        <!-- Completed Tasks Section -->
+        <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                Completed Tasks
+                <!-- Modern Checkmark Circle Icon -->
+                <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+            </h2>
+            <div id="completedTasksList" class="space-y-3">
+                <!-- Completed tasks will be appended here -->
+            </div>
+            <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
+        </div>
+
         <!-- All Tasks Section -->
-        <div class="mt-8 bg-gray-50 p-6 rounded-lg shadow-inner">
+        <div id="allTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
                 All Tasks
-                <svg class="ml-2 w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
-                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2h2V1a1 1 0 011-1h2a1 1 0 011 1v2h2a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 2a1 1 0 000 2h6a1 1 0 100-2H7zm-1 4a1 1 0 100 2h8a1 1 0 100-2H6zm-1 4a1 1 0 100 2h10a1 1 0 100-2H5z" clip-rule="evenodd"></path>
+                <!-- Modern List Icon -->
+                <svg class="ml-2 w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
                 </svg>
             </h2>
             <div id="allTasksList" class="space-y-3">
@@ -251,17 +293,21 @@
         let auth;
         let currentUserId = null;
         let authReady = false;
+        let allTasksData = []; // Store all tasks for export
 
         // Get references to DOM elements
         const newTaskInput = document.getElementById('newTaskInput');
         const taskDeadlineInput = document.getElementById('taskDeadlineInput');
         const taskCategoryInput = document.getElementById('taskCategoryInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
+        const exportTasksBtn = document.getElementById('exportTasksBtn');
         const dailyTasksList = document.getElementById('dailyTasksList');
         const pendingTasksList = document.getElementById('pendingTasksList');
+        const completedTasksList = document.getElementById('completedTasksList');
         const allTasksList = document.getElementById('allTasksList');
         const noDailyTasksMessage = document.getElementById('noDailyTasks');
         const noPendingTasksMessage = document.getElementById('noPendingTasks');
+        const noCompletedTasksMessage = document.getElementById('noCompletedTasks');
         const noAllTasksMessage = document.getElementById('noAllTasks');
         const userIdDisplay = document.getElementById('userIdDisplay');
         const statusMessage = document.getElementById('statusMessage');
@@ -327,6 +373,7 @@
                 console.log("Firestore snapshot received. Number of documents:", snapshot.size);
                 dailyTasksList.innerHTML = '';
                 pendingTasksList.innerHTML = '';
+                completedTasksList.innerHTML = '';
                 allTasksList.innerHTML = '';
 
                 const tasks = [];
@@ -334,11 +381,21 @@
                     tasks.push({ id: doc.id, ...doc.data() });
                 });
 
+                allTasksData = tasks; 
+
                 tasks.sort((a, b) => {
-                    if (a.createdAt && b.createdAt) {
-                        return a.createdAt.toDate() - b.createdAt.toDate();
-                    }
-                    return a.text.localeCompare(b.text);
+                    const dateA = a.deadline ? new Date(a.deadline + 'T00:00:00') : new Date('9999-12-31T00:00:00');
+                    const dateB = b.deadline ? new Date(b.deadline + 'T00:00:00') : new Date('9999-12-31T00:00:00');
+
+                    if (dateA < dateB) return -1;
+                    if (dateA > dateB) return 1;
+
+                    const createdAtA = a.createdAt ? a.createdAt.toDate() : new Date(0);
+                    const createdAtB = b.createdAt ? b.createdAt.toDate() : new Date(0);
+                    if (createdAtA < createdAtB) return -1;
+                    if (createdAtA > createdAtB) return 1;
+
+                    return 0;
                 });
 
                 const today = new Date();
@@ -346,28 +403,33 @@
 
                 const dailyTasksForTodayByCategory = {};
                 const pendingTasksByCategory = {};
+                const completedTasksByCategory = {};
                 const allTasksByCategory = {};
 
                 tasks.forEach(taskData => {
                     const category = taskData.category || 'General';
 
-                    // Filter for Daily Tasks (Today)
-                    if (taskData.isDaily && taskData.deadline === todayFormatted) {
+                    if (taskData.isDaily && taskData.deadline === todayFormatted && !taskData.isCompleted) {
                         if (!dailyTasksForTodayByCategory[category]) {
                             dailyTasksForTodayByCategory[category] = [];
                         }
                         dailyTasksForTodayByCategory[category].push(taskData);
                     }
                     
-                    // Filter for Pending Tasks (not daily)
-                    if (!taskData.isDaily) {
+                    if (!taskData.isDaily && !taskData.isCompleted) {
                         if (!pendingTasksByCategory[category]) {
                             pendingTasksByCategory[category] = [];
                         }
                         pendingTasksByCategory[category].push(taskData);
                     }
 
-                    // All tasks for the "All Tasks" dashboard
+                    if (taskData.isCompleted) {
+                        if (!completedTasksByCategory[category]) {
+                            completedTasksByCategory[category] = [];
+                        }
+                        completedTasksByCategory[category].push(taskData);
+                    }
+
                     if (!allTasksByCategory[category]) {
                         allTasksByCategory[category] = [];
                     }
@@ -416,6 +478,27 @@
                     });
                 });
 
+                const sortedCompletedCategories = Object.keys(completedTasksByCategory).sort();
+                sortedCompletedCategories.forEach(category => {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.classList.add('category-header', 'completed-category-border');
+                    categoryHeader.textContent = category;
+                    completedTasksList.appendChild(categoryHeader);
+
+                    completedTasksByCategory[category].forEach(taskData => {
+                        const taskItem = createTaskElement(
+                            taskData.text,
+                            taskData.deadline,
+                            taskData.notes,
+                            taskData.category,
+                            taskData.isDaily,
+                            taskData.isCompleted,
+                            taskData.id
+                        );
+                        completedTasksList.appendChild(taskItem);
+                    });
+                });
+
                 const sortedAllCategories = Object.keys(allTasksByCategory).sort();
                 sortedAllCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
@@ -424,7 +507,7 @@
                     allTasksList.appendChild(categoryHeader);
 
                     allTasksByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(
+                        const taskItem = createTaskElement( // Fixed typo: createTaskC to createTaskElement
                             taskData.text,
                             taskData.deadline,
                             taskData.notes,
@@ -455,6 +538,7 @@
         function updateNoTasksMessages() {
             noDailyTasksMessage.classList.toggle('hidden', dailyTasksList.children.length > 0);
             noPendingTasksMessage.classList.toggle('hidden', pendingTasksList.children.length > 0);
+            noCompletedTasksMessage.classList.toggle('hidden', completedTasksList.children.length > 0);
             noAllTasksMessage.classList.toggle('hidden', allTasksList.children.length > 0);
         }
 
@@ -495,6 +579,7 @@
                 taskContentDiv.appendChild(categorySpan);
             }
 
+            // Reinstated notes display
             const notesDisplayDiv = document.createElement('div');
             notesDisplayDiv.classList.add('task-notes', 'hidden');
             if (notes) {
@@ -538,6 +623,7 @@
             moveBtn.onclick = () => moveTask(taskItem);
             actionsDiv.appendChild(moveBtn);
 
+            // Reinstated Edit Notes Button
             const editNotesBtn = document.createElement('button');
             editNotesBtn.textContent = 'Edit Notes';
             editNotesBtn.classList.add(
@@ -585,7 +671,7 @@
             const taskText = newTaskInput.value.trim();
             const taskDeadline = taskDeadlineInput.value;
             const taskCategory = taskCategoryInput.value;
-            const taskNotes = '';
+            const taskNotes = ''; 
 
             if (taskText === '') {
                 alert('Please enter a task!');
@@ -663,7 +749,7 @@
             }
         }
 
-        // Functions for Notes Modal
+        // Reinstated Functions for Notes Modal
         window.openNotesModal = function(taskItem) {
             currentTaskItemForNotes = taskItem;
             editNotesTextarea.value = taskItem.dataset.notes || '';
@@ -699,8 +785,49 @@
             }
         }
 
+        // --- Export to CSV Function ---
+        function exportTasksToCsv() {
+            if (allTasksData.length === 0) {
+                alert("No tasks to export!");
+                return;
+            }
+
+            const headers = ["Task", "Deadline", "Category", "Notes", "Is Daily", "Is Completed", "Created At"];
+            let csv = headers.join(",") + "\n";
+
+            allTasksData.forEach(task => {
+                const row = [
+                    `"${task.text.replace(/"/g, '""')}"`,
+                    task.deadline || '',
+                    task.category || 'General',
+                    `"${task.notes ? task.notes.replace(/"/g, '""') : ''}"`,
+                    task.isDaily ? 'TRUE' : 'FALSE',
+                    task.isCompleted ? 'TRUE' : 'FALSE',
+                    task.createdAt ? new Date(task.createdAt.toDate()).toLocaleString() : ''
+                ];
+                csv += row.join(",") + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "tasks.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } else {
+                alert("Your browser does not support downloading files directly. Please copy the data manually.");
+            }
+        }
+
         // --- Event Listeners ---
         addTaskBtn.addEventListener('click', addTask);
+        exportTasksBtn.addEventListener('click', exportTasksToCsv);
+
         newTaskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addTask();
@@ -717,6 +844,7 @@
             }
         });
 
+        // Reinstated event listener for the notes modal
         window.addEventListener('click', (event) => {
             if (event.target === notesModal) {
                 closeNotesModal();
