@@ -10,28 +10,26 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* Minimal Modern Background: Subtle linear gradient */
-            background: linear-gradient(to right bottom, #e0f7fa, #c8e6c9); /* Light blues and greens */
-            min-height: 100vh; /* Ensure it covers the full viewport height */
+            background: linear-gradient(to right bottom, #e0f7fa, #c8e6c9);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1.5rem; /* Add some padding around the main content */
+            padding: 1.5rem;
         }
         .task-item {
             display: flex;
-            align-items: flex-start; /* Align items to the start (top) for better visual flow */
-            justify-content: space-between;
+            flex-direction: column; /* Stack content and actions vertically */
+            align-items: flex-start; /* Align content to the left */
             padding: 0.75rem 1rem;
             margin-bottom: 0.5rem;
             background-color: #ffffff;
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             transition: all 0.2s ease-in-out;
-            flex-wrap: wrap;
         }
         .task-item.completed {
-            background-color: #e0f2f7; /* Light blue for completed tasks */
+            background-color: #e0f2f7;
             text-decoration: line-through;
             color: #6b7280;
         }
@@ -41,16 +39,17 @@
         }
         .task-content {
             flex-grow: 1;
-            margin-right: 1rem;
+            width: 100%; /* Take full width to allow text wrapping */
+            margin-bottom: 0.5rem; /* Space between content and buttons */
             word-break: break-word;
-            display: flex; /* Use flex for internal stacking */
-            flex-direction: column; /* Stack text, deadline, notes vertically */
-            align-items: flex-start; /* Align content within task-content to the start */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
         }
         .task-text {
             font-size: 1.125rem;
             color: #1f2937;
-            line-height: 1.4; /* Improve readability for multi-line text */
+            line-height: 1.4;
         }
         .task-deadline {
             font-size: 0.875rem;
@@ -66,8 +65,8 @@
             border-radius: 0.375rem;
             border: 1px solid #e5e7eb;
             white-space: pre-wrap;
-            width: 100%; /* Ensure notes take full width within content area */
-            box-sizing: border-box; /* Include padding/border in width */
+            width: 100%;
+            box-sizing: border-box;
         }
         .task-category {
             font-size: 0.75rem;
@@ -78,14 +77,15 @@
             margin-left: 0.5rem;
             font-weight: 600;
             text-transform: uppercase;
-            align-self: flex-start; /* Align category tag to the start of its flex container */
+            align-self: flex-start;
         }
         .task-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            margin-top: 0.5rem;
-            align-self: flex-end; /* Align buttons to the end (right) */
+            width: 100%; /* Take full width to align buttons */
+            justify-content: flex-end; /* Align buttons to the right */
+            margin-top: 0.5rem; /* Ensure space below content */
         }
         .task-actions button {
             padding: 0.4rem 0.8rem;
@@ -99,25 +99,33 @@
         }
         /* Category Header Styling */
         .category-header {
-            font-size: 1.25rem; /* text-xl */
-            font-weight: 600; /* font-semibold */
-            color: #4b5563; /* gray-700 */
-            margin-top: 1.5rem; /* mt-6 */
-            margin-bottom: 0.75rem; /* mb-3 */
-            padding-left: 0.5rem; /* pl-2 */
-            border-left: 4px solid; /* border-l-4 */
-            border-color: #60a5fa; /* blue-400, adjust for daily/pending */
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+            border-left: 4px solid;
             display: flex;
             align-items: center;
         }
         .daily-category-border {
-            border-color: #60a5fa; /* blue-400 */
+            border-color: #60a5fa;
         }
         .pending-category-border {
-            border-color: #f87171; /* red-400 */
+            border-color: #f87171;
         }
         .all-category-border {
-            border-color: #9ca3af; /* gray-400 */
+            border-color: #9ca3af;
+        }
+        /* Ensure input fields take full width on small screens */
+        .mb-8 > .flex-grow {
+            width: 100%;
+        }
+        @media (min-width: 640px) { /* Tailwind's sm breakpoint */
+            .mb-8 > .flex-grow {
+                width: auto; /* Revert to auto on larger screens */
+            }
         }
     </style>
 </head>
@@ -366,11 +374,10 @@
                     allTasksByCategory[category].push(taskData);
                 });
 
-                // Render Daily Tasks (Today) by Category
                 const sortedDailyCategories = Object.keys(dailyTasksForTodayByCategory).sort();
                 sortedDailyCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'daily-category-border'); /* Use combined class */
+                    categoryHeader.classList.add('category-header', 'daily-category-border');
                     categoryHeader.textContent = category;
                     dailyTasksList.appendChild(categoryHeader);
 
@@ -388,11 +395,10 @@
                     });
                 });
 
-                // Render Pending Tasks by Category
                 const sortedPendingCategories = Object.keys(pendingTasksByCategory).sort();
                 sortedPendingCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'pending-category-border'); /* Use combined class */
+                    categoryHeader.classList.add('category-header', 'pending-category-border');
                     categoryHeader.textContent = category;
                     pendingTasksList.appendChild(categoryHeader);
 
@@ -410,11 +416,10 @@
                     });
                 });
 
-                // Render All Tasks by Category
                 const sortedAllCategories = Object.keys(allTasksByCategory).sort();
                 sortedAllCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'all-category-border'); /* Use combined class */
+                    categoryHeader.classList.add('category-header', 'all-category-border');
                     categoryHeader.textContent = category;
                     allTasksList.appendChild(categoryHeader);
 
@@ -594,7 +599,7 @@
                     deadline: taskDeadline,
                     notes: taskNotes,
                     category: taskCategory,
-                    isDaily: true, // New tasks are daily by default
+                    isDaily: true,
                     isCompleted: false,
                     createdAt: serverTimestamp()
                 });
