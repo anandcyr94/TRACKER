@@ -29,9 +29,8 @@
             transition: all 0.2s ease-in-out;
         }
         .task-item.completed {
-            background-color: #e0f2f7;
-            text-decoration: line-through;
-            color: #6b7280;
+            /* No strikethrough or color change here, just moves to completed section */
+            background-color: #ffffff; /* Keep individual item background white */
         }
         .task-item:hover {
             transform: translateY(-2px);
@@ -223,21 +222,6 @@
             </div>
         </div>
 
-        <!-- Completed Tasks Section -->
-        <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
-                Completed Tasks
-                <!-- Modern Checkmark Circle Icon -->
-                <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
-                </svg>
-            </h2>
-            <div id="completedTasksList" class="space-y-3">
-                <!-- Completed tasks will be appended here -->
-            </div>
-            <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
-        </div>
-
         <!-- All Tasks Section -->
         <div id="allTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
             <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
@@ -251,6 +235,21 @@
                 <!-- All tasks will be appended here -->
             </div>
             <p id="noAllTasks" class="text-gray-500 text-center mt-4 hidden">No tasks added yet!</p>
+        </div>
+
+        <!-- Completed Tasks Section (Moved to the end) -->
+        <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                Completed Tasks
+                <!-- Modern Checkmark Circle Icon -->
+                <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+            </h2>
+            <div id="completedTasksList" class="space-y-3">
+                <!-- Completed tasks will be appended here -->
+            </div>
+            <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
         </div>
     </div>
 
@@ -404,7 +403,7 @@
                 const dailyTasksForTodayByCategory = {};
                 const pendingTasksByCategory = {};
                 const completedTasksByCategory = {};
-                const allTasksByCategory = {};
+                const allTasksNotCompletedByCategory = {}; // For "All Tasks" dashboard, excluding completed ones
 
                 tasks.forEach(taskData => {
                     const category = taskData.category || 'General';
@@ -430,10 +429,13 @@
                         completedTasksByCategory[category].push(taskData);
                     }
 
-                    if (!allTasksByCategory[category]) {
-                        allTasksByCategory[category] = [];
+                    // Only add non-completed tasks to the "All Tasks" dashboard
+                    if (!taskData.isCompleted) {
+                        if (!allTasksNotCompletedByCategory[category]) {
+                            allTasksNotCompletedByCategory[category] = [];
+                        }
+                        allTasksNotCompletedByCategory[category].push(taskData);
                     }
-                    allTasksByCategory[category].push(taskData);
                 });
 
                 const sortedDailyCategories = Object.keys(dailyTasksForTodayByCategory).sort();
@@ -478,6 +480,27 @@
                     });
                 });
 
+                const sortedAllCategories = Object.keys(allTasksNotCompletedByCategory).sort();
+                sortedAllCategories.forEach(category => {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.classList.add('category-header', 'all-category-border');
+                    categoryHeader.textContent = category;
+                    allTasksList.appendChild(categoryHeader);
+
+                    allTasksNotCompletedByCategory[category].forEach(taskData => {
+                        const taskItem = createTaskElement(
+                            taskData.text,
+                            taskData.deadline,
+                            taskData.notes,
+                            taskData.category,
+                            taskData.isDaily,
+                            taskData.isCompleted,
+                            taskData.id
+                        );
+                        allTasksList.appendChild(taskItem);
+                    });
+                });
+
                 const sortedCompletedCategories = Object.keys(completedTasksByCategory).sort();
                 sortedCompletedCategories.forEach(category => {
                     const categoryHeader = document.createElement('h3');
@@ -496,27 +519,6 @@
                             taskData.id
                         );
                         completedTasksList.appendChild(taskItem);
-                    });
-                });
-
-                const sortedAllCategories = Object.keys(allTasksByCategory).sort();
-                sortedAllCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'all-category-border');
-                    categoryHeader.textContent = category;
-                    allTasksList.appendChild(categoryHeader);
-
-                    allTasksByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement( // Fixed typo: createTaskC to createTaskElement
-                            taskData.text,
-                            taskData.deadline,
-                            taskData.notes,
-                            taskData.category,
-                            taskData.isDaily,
-                            taskData.isCompleted,
-                            taskData.id
-                        );
-                        allTasksList.appendChild(taskItem);
                     });
                 });
 
@@ -546,9 +548,10 @@
         function createTaskElement(taskText, deadline = '', notes = '', category = 'General', isDaily = false, isCompleted = false, docId = null) {
             const taskItem = document.createElement('div');
             taskItem.classList.add('task-item');
-            if (isCompleted) {
-                taskItem.classList.add('completed');
-            }
+            // Removed completed styling from here, it's now just a category
+            // if (isCompleted) {
+            //     taskItem.classList.add('completed');
+            // }
             taskItem.dataset.daily = isDaily;
             taskItem.dataset.completed = isCompleted;
             taskItem.dataset.deadline = deadline;
@@ -579,7 +582,6 @@
                 taskContentDiv.appendChild(categorySpan);
             }
 
-            // Reinstated notes display
             const notesDisplayDiv = document.createElement('div');
             notesDisplayDiv.classList.add('task-notes', 'hidden');
             if (notes) {
@@ -608,22 +610,24 @@
             completeBtn.onclick = () => toggleComplete(taskItem);
             actionsDiv.appendChild(completeBtn);
 
-            const moveBtn = document.createElement('button');
-            moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
-            moveBtn.classList.add(
-                isDaily ? 'bg-purple-500' : 'bg-indigo-500',
-                'text-white',
-                'hover:bg-purple-600',
-                'hover:bg-indigo-600',
-                'focus:outline-none',
-                'focus:ring-2',
-                'focus:ring-offset-2',
-                'focus:ring-purple-500'
-            );
-            moveBtn.onclick = () => moveTask(taskItem);
-            actionsDiv.appendChild(moveBtn);
+            // Only add "Move to Pending/Daily" if the task is NOT completed
+            if (!isCompleted) {
+                const moveBtn = document.createElement('button');
+                moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
+                moveBtn.classList.add(
+                    isDaily ? 'bg-purple-500' : 'bg-indigo-500',
+                    'text-white',
+                    'hover:bg-purple-600',
+                    'hover:bg-indigo-600',
+                    'focus:outline-none',
+                    'focus:ring-2',
+                    'focus:ring-offset-2',
+                    'focus:ring-purple-500'
+                );
+                moveBtn.onclick = () => moveTask(taskItem);
+                actionsDiv.appendChild(moveBtn);
+            }
 
-            // Reinstated Edit Notes Button
             const editNotesBtn = document.createElement('button');
             editNotesBtn.textContent = 'Edit Notes';
             editNotesBtn.classList.add(
@@ -844,7 +848,6 @@
             }
         });
 
-        // Reinstated event listener for the notes modal
         window.addEventListener('click', (event) => {
             if (event.target === notesModal) {
                 closeNotesModal();
