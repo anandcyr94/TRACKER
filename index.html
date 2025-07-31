@@ -14,8 +14,32 @@
             display: flex;
             align-items: flex-start; /* Align to start for scrolling if content is tall */
             justify-content: center;
-            padding: 1.5rem;
+            /* Optimized padding for full screen - more controlled horizontal padding */
+            padding-top: 2rem; /* py-8 */
+            padding-bottom: 2rem; /* py-8 */
+            padding-left: 1rem; /* px-4 */
+            padding-right: 1rem; /* px-4 */
         }
+        /* Responsive horizontal padding for body */
+        @media (min-width: 768px) { /* md breakpoint */
+            body {
+                padding-left: 2rem; /* md:px-8 */
+                padding-right: 2rem; /* md:px-8 */
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            body {
+                padding-left: 4rem; /* lg:px-16 */
+                padding-right: 4rem; /* lg:px-16 */
+            }
+        }
+        @media (min-width: 1280px) { /* xl breakpoint */
+            body {
+                padding-left: 8rem; /* xl:px-32 */
+                padding-right: 8rem; /* xl:px-32 */
+            }
+        }
+
         .task-item {
             display: flex;
             flex-direction: column;
@@ -180,9 +204,8 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
-        <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Anand Tasks Board</h1>
+<body class="min-h-screen flex items-center justify-center px-4 py-8 md:px-8 lg:px-16 xl:px-32">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full"> <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Anand Tasks Board</h1>
 
         <div class="text-center text-sm text-gray-500 mb-2">
             User ID: <span id="userIdDisplay" class="font-mono text-gray-700">Loading...</span>
@@ -220,8 +243,7 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 gap-6">
-            <div id="mostUrgentTasksSection" class="p-6 rounded-lg shadow-inner">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6"> <div id="mostUrgentTasksSection" class="p-6 rounded-lg shadow-inner">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
                     Most Urgent Tasks
                     <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
