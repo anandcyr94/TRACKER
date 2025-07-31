@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anand Tasks Board</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -13,7 +12,7 @@
             background: linear-gradient(to right bottom, #e0f7fa, #c8e6c9);
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Align to start for scrolling if content is tall */
             justify-content: center;
             padding: 1.5rem;
         }
@@ -27,10 +26,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
             transition: all 0.2s ease-in-out;
-        }
-        .task-item.completed {
-            /* No strikethrough or color change here, just moves to completed section */
-            background-color: #ffffff; /* Keep individual item background white */
+            width: 100%; /* Ensure full width within its container */
         }
         .task-item:hover {
             transform: translateY(-2px);
@@ -108,30 +104,30 @@
             display: flex;
             align-items: center;
         }
-        .daily-category-border {
-            border-color: #60a5fa;
+        .current-day-category-border {
+            border-color: #60a5fa; /* Blue */
         }
-        .pending-category-border {
-            border-color: #f87171;
+        .most-urgent-category-border {
+            border-color: #f87171; /* Red */
+        }
+        .date-wise-category-border {
+            border-color: #9ca3af; /* Gray */
         }
         .completed-category-border {
-            border-color: #34d399;
-        }
-        .all-category-border {
-            border-color: #9ca3af;
+            border-color: #34d399; /* Green */
         }
         /* Dashboard Section Backgrounds for distinction */
-        #dailyTasksSection {
+        #currentDayTasksSection {
             background-color: #e3f2fd; /* Light Blue */
         }
-        #pendingTasksSection {
+        #mostUrgentTasksSection {
             background-color: #ffebee; /* Light Red */
+        }
+        #dateWiseTasksSection {
+            background-color: #f5f5f5; /* Very Light Gray */
         }
         #completedTasksSection {
             background-color: #e8f5e9; /* Light Green */
-        }
-        #allTasksSection {
-            background-color: #f5f5f5; /* Very Light Gray */
         }
 
         /* Ensure input fields take full width on small screens */
@@ -143,22 +139,58 @@
                 width: auto;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto; /* Centered */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
         <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Anand Tasks Board</h1>
 
-        <!-- User ID Display -->
         <div class="text-center text-sm text-gray-500 mb-2">
             User ID: <span id="userIdDisplay" class="font-mono text-gray-700">Loading...</span>
         </div>
-        <!-- Status Message -->
         <div id="statusMessage" class="text-center text-sm text-blue-600 mb-4">
             Initializing app...
         </div>
 
-        <!-- Task Input Section -->
         <div class="mb-8 flex flex-col sm:flex-row gap-4 flex-wrap">
             <input type="text" id="newTaskInput" placeholder="Add a new task..."
                    class="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
@@ -181,7 +213,6 @@
             </button>
         </div>
 
-        <!-- Export Button -->
         <div class="mb-8 text-center">
             <button id="exportTasksBtn"
                     class="bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition duration-200 ease-in-out shadow-md">
@@ -189,71 +220,57 @@
             </button>
         </div>
 
-        <!-- Task Dashboards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Daily Tasks Section -->
-            <div id="dailyTasksSection" class="p-6 rounded-lg shadow-inner">
+        <div class="grid grid-cols-1 gap-6">
+            <div id="mostUrgentTasksSection" class="p-6 rounded-lg shadow-inner">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
-                    Daily Tasks (Today)
-                    <!-- Modern Sun Icon -->
+                    Most Urgent Tasks
+                    <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M12 2.25c-3.328 0-6 2.672-6 6 0 2.658 1.487 4.908 3.704 6.162-.193.303-.503.565-.873.743A9.766 9.766 0 003 18.75c0 1.036.84 1.875 1.875 1.875h14.25c1.036 0 1.875-.84 1.875-1.875 0-1.574-.783-2.915-1.99-3.794a3.39 3.39 0 00-.702-.455c2.217-1.254 3.704-3.504 3.704-6.162 0-3.328-2.672-6-6-6zm-1.75 8.75a.75.75 0 001.5 0v-6a.75.75 0 00-1.5 0v6z" clip-rule="evenodd" />
+                    </svg>
+                </h2>
+                <div id="mostUrgentTasksList" class="space-y-3">
+                    </div>
+                <p id="noMostUrgentTasks" class="text-gray-500 text-center mt-4 hidden">No urgent tasks!</p>
+            </div>
+
+            <div id="currentDayTasksSection" class="p-6 rounded-lg shadow-inner">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                    Current Day Tasks (<span id="currentDayDate"></span>)
                     <svg class="ml-2 w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 00-1.06-1.06l-1.59 1.59a.75.75 0 101.06 1.06l1.59-1.59zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V18a.75.75 0 01.75-.75zM5.656 17.344a.75.75 0 001.06-1.06l-1.59-1.59a.75.75 0 10-1.06 1.06l1.59 1.59zM3 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3.75A.75.75 0 013 12zM17.344 5.656a.75.75 0 00-1.06 1.06l1.59 1.59a.75.75 0 101.06-1.06l-1.59-1.59zM12 3a9 9 0 100 18 9 9 0 000-18z" />
                     </svg>
                 </h2>
-                <div id="dailyTasksList" class="space-y-3">
-                    <!-- Daily tasks for today will be appended here -->
-                </div>
-                <p id="noDailyTasks" class="text-gray-500 text-center mt-4 hidden">No daily tasks for today!</p>
+                <div id="currentDayTasksList" class="space-y-3">
+                    </div>
+                <p id="noCurrentDayTasks" class="text-gray-500 text-center mt-4 hidden">No tasks for today!</p>
             </div>
 
-            <!-- Pending Tasks Section -->
-            <div id="pendingTasksSection" class="p-6 rounded-lg shadow-inner">
+            <div id="dateWiseTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
                 <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
-                    Pending Tasks
-                    <!-- Modern Flag Icon -->
-                    <svg class="ml-2 w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v12zm0 0v2a2 2 0 002 2h3v-3H4z" />
+                    Tasks by Date
+                    <svg class="ml-2 w-6 h-6 text-indigo-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 19.5H5.25A2.25 2.25 0 013 17.25V6.75A2.25 2.25 0 015.25 4.5H6.75V3a.75.75 0 01.75-.75zm10.5 6a.75.75 0 01.75.75v5.25a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75z" clip-rule="evenodd" />
                     </svg>
                 </h2>
-                <div id="pendingTasksList" class="space-y-3">
-                    <!-- Pending tasks will be appended here -->
-                </div>
-                <p id="noPendingTasks" class="text-gray-500 text-center mt-4 hidden">No pending tasks yet!</p>
+                <div id="dateWiseTasksList" class="space-y-3">
+                    </div>
+                <p id="noDateWiseTasks" class="text-gray-500 text-center mt-4 hidden">No future tasks!</p>
             </div>
-        </div>
 
-        <!-- All Tasks Section -->
-        <div id="allTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
-                All Tasks
-                <!-- Modern List Icon -->
-                <svg class="ml-2 w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zm0 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                </svg>
-            </h2>
-            <div id="allTasksList" class="space-y-3">
-                <!-- All tasks will be appended here -->
+            <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                    Completed Tasks
+                    <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
+                    </svg>
+                </h2>
+                <div id="completedTasksList" class="space-y-3">
+                    </div>
+                <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
             </div>
-            <p id="noAllTasks" class="text-gray-500 text-center mt-4 hidden">No tasks added yet!</p>
-        </div>
-
-        <!-- Completed Tasks Section (Moved to the end) -->
-        <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
-            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
-                Completed Tasks
-                <!-- Modern Checkmark Circle Icon -->
-                <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
-                </svg>
-            </h2>
-            <div id="completedTasksList" class="space-y-3">
-                <!-- Completed tasks will be appended here -->
-            </div>
-            <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
         </div>
     </div>
 
-    <!-- Notes Edit Modal -->
     <div id="notesModal" class="modal">
         <div class="modal-content">
             <span class="close-button" onclick="window.closeNotesModal()">&times;</span>
@@ -268,7 +285,7 @@
     <script type="module">
         // Firebase SDK Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, deleteDoc, onSnapshot, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global Firebase variables (provided by the Canvas environment)
@@ -285,8 +302,6 @@
             measurementId: "G-4T4829KXPH"
         };
 
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
         let app;
         let db;
         let auth;
@@ -300,16 +315,21 @@
         const taskCategoryInput = document.getElementById('taskCategoryInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const exportTasksBtn = document.getElementById('exportTasksBtn');
-        const dailyTasksList = document.getElementById('dailyTasksList');
-        const pendingTasksList = document.getElementById('pendingTasksList');
+
+        const currentDayTasksList = document.getElementById('currentDayTasksList');
+        const mostUrgentTasksList = document.getElementById('mostUrgentTasksList');
+        const dateWiseTasksList = document.getElementById('dateWiseTasksList');
         const completedTasksList = document.getElementById('completedTasksList');
-        const allTasksList = document.getElementById('allTasksList');
-        const noDailyTasksMessage = document.getElementById('noDailyTasks');
-        const noPendingTasksMessage = document.getElementById('noPendingTasks');
+
+        const noCurrentDayTasksMessage = document.getElementById('noCurrentDayTasks');
+        const noMostUrgentTasksMessage = document.getElementById('noMostUrgentTasks');
+        const noDateWiseTasksMessage = document.getElementById('noDateWiseTasks');
         const noCompletedTasksMessage = document.getElementById('noCompletedTasks');
-        const noAllTasksMessage = document.getElementById('noAllTasks');
+
         const userIdDisplay = document.getElementById('userIdDisplay');
         const statusMessage = document.getElementById('statusMessage');
+        const currentDayDateDisplay = document.getElementById('currentDayDate');
+
 
         const notesModal = document.getElementById('notesModal');
         const editNotesTextarea = document.getElementById('editNotesTextarea');
@@ -318,16 +338,13 @@
         // --- Firebase Initialization and Authentication ---
         async function initializeFirebase() {
             console.log("Attempting to initialize Firebase.");
-            console.log("App ID from environment (if available):", appId); 
-            console.log("Firebase Config (used):", firebaseConfig); 
-            console.log("Initial Auth Token present (if available):", !!initialAuthToken);
+            statusMessage.textContent = "Authenticating...";
 
             try {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 console.log("Firebase app, db, auth initialized.");
-                statusMessage.textContent = "Authenticating...";
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
@@ -370,18 +387,19 @@
 
             onSnapshot(tasksCollectionRef, (snapshot) => {
                 console.log("Firestore snapshot received. Number of documents:", snapshot.size);
-                dailyTasksList.innerHTML = '';
-                pendingTasksList.innerHTML = '';
+                currentDayTasksList.innerHTML = '';
+                mostUrgentTasksList.innerHTML = '';
+                dateWiseTasksList.innerHTML = '';
                 completedTasksList.innerHTML = '';
-                allTasksList.innerHTML = '';
 
                 const tasks = [];
                 snapshot.forEach(doc => {
                     tasks.push({ id: doc.id, ...doc.data() });
                 });
 
-                allTasksData = tasks; 
+                allTasksData = tasks; // Store all tasks for export
 
+                // Sort tasks primarily by deadline, then by creation date
                 tasks.sort((a, b) => {
                     const dateA = a.deadline ? new Date(a.deadline + 'T00:00:00') : new Date('9999-12-31T00:00:00');
                     const dateB = b.deadline ? new Date(b.deadline + 'T00:00:00') : new Date('9999-12-31T00:00:00');
@@ -399,130 +417,85 @@
 
                 const today = new Date();
                 const todayFormatted = today.toISOString().split('T')[0];
+                currentDayDateDisplay.textContent = today.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
-                const dailyTasksForTodayByCategory = {};
-                const pendingTasksByCategory = {};
-                const completedTasksByCategory = {};
-                const allTasksNotCompletedByCategory = {}; // For "All Tasks" dashboard, excluding completed ones
+
+                const currentDayTasks = {};
+                const mostUrgentTasks = {};
+                const dateWiseTasks = {}; // Will store tasks grouped by date
+                const completedTasks = {};
 
                 tasks.forEach(taskData => {
                     const category = taskData.category || 'General';
 
-                    if (taskData.isDaily && taskData.deadline === todayFormatted && !taskData.isCompleted) {
-                        if (!dailyTasksForTodayByCategory[category]) {
-                            dailyTasksForTodayByCategory[category] = [];
-                        }
-                        dailyTasksForTodayByCategory[category].push(taskData);
-                    }
-                    
-                    if (!taskData.isDaily && !taskData.isCompleted) {
-                        if (!pendingTasksByCategory[category]) {
-                            pendingTasksByCategory[category] = [];
-                        }
-                        pendingTasksByCategory[category].push(taskData);
-                    }
-
                     if (taskData.isCompleted) {
-                        if (!completedTasksByCategory[category]) {
-                            completedTasksByCategory[category] = [];
-                        }
-                        completedTasksByCategory[category].push(taskData);
+                        if (!completedTasks[category]) completedTasks[category] = [];
+                        completedTasks[category].push(taskData);
+                    } else if (taskData.isUrgent) {
+                        if (!mostUrgentTasks[category]) mostUrgentTasks[category] = [];
+                        mostUrgentTasks[category].push(taskData);
+                    } else if (taskData.deadline === todayFormatted) {
+                        if (!currentDayTasks[category]) currentDayTasks[category] = [];
+                        currentDayTasks[category].push(taskData);
+                    } else {
+                        // All other non-urgent, non-completed tasks
+                        const deadlineDate = taskData.deadline || 'No Date';
+                        if (!dateWiseTasks[deadlineDate]) dateWiseTasks[deadlineDate] = {};
+                        if (!dateWiseTasks[deadlineDate][category]) dateWiseTasks[deadlineDate][category] = [];
+                        dateWiseTasks[deadlineDate][category].push(taskData);
                     }
-
-                    // Only add non-completed tasks to the "All Tasks" dashboard
-                    if (!taskData.isCompleted) {
-                        if (!allTasksNotCompletedByCategory[category]) {
-                            allTasksNotCompletedByCategory[category] = [];
-                        }
-                        allTasksNotCompletedByCategory[category].push(taskData);
-                    }
                 });
 
-                const sortedDailyCategories = Object.keys(dailyTasksForTodayByCategory).sort();
-                sortedDailyCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'daily-category-border');
-                    categoryHeader.textContent = category;
-                    dailyTasksList.appendChild(categoryHeader);
+                // Render Most Urgent Tasks
+                renderTasksSection(mostUrgentTasks, mostUrgentTasksList, 'most-urgent-category-border');
+                noMostUrgentTasksMessage.classList.toggle('hidden', Object.keys(mostUrgentTasks).length > 0 || mostUrgentTasksList.children.length > 0);
 
-                    dailyTasksForTodayByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(
-                            taskData.text,
-                            taskData.deadline,
-                            taskData.notes,
-                            taskData.category,
-                            taskData.isDaily,
-                            taskData.isCompleted,
-                            taskData.id
-                        );
-                        dailyTasksList.appendChild(taskItem);
+
+                // Render Current Day Tasks
+                renderTasksSection(currentDayTasks, currentDayTasksList, 'current-day-category-border');
+                noCurrentDayTasksMessage.classList.toggle('hidden', Object.keys(currentDayTasks).length > 0 || currentDayTasksList.children.length > 0);
+
+                // Render Date Wise Tasks
+                const sortedDates = Object.keys(dateWiseTasks).sort((a, b) => {
+                    if (a === 'No Date') return 1; // "No Date" always last
+                    if (b === 'No Date') return -1; // "No Date" always last
+                    return new Date(a) - new Date(b);
+                });
+
+                sortedDates.forEach(date => {
+                    const dateHeader = document.createElement('h3');
+                    dateHeader.classList.add('category-header', 'date-wise-category-border');
+                    dateHeader.textContent = date === 'No Date' ? 'No Due Date' : new Date(date + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                    dateWiseTasksList.appendChild(dateHeader);
+
+                    const sortedCategories = Object.keys(dateWiseTasks[date]).sort();
+                    sortedCategories.forEach(category => {
+                        const categoryHeader = document.createElement('h4'); // Use h4 for sub-category headers
+                        categoryHeader.classList.add('text-lg', 'font-semibold', 'text-gray-600', 'mt-3', 'mb-2', 'pl-2', 'border-l-2', 'border-gray-400');
+                        categoryHeader.textContent = category;
+                        dateWiseTasksList.appendChild(categoryHeader);
+
+                        dateWiseTasks[date][category].forEach(taskData => {
+                            const taskItem = createTaskElement(
+                                taskData.text,
+                                taskData.deadline,
+                                taskData.notes,
+                                taskData.category,
+                                taskData.isUrgent, // Pass isUrgent
+                                taskData.isCompleted,
+                                taskData.id
+                            );
+                            dateWiseTasksList.appendChild(taskItem);
+                        });
                     });
                 });
+                noDateWiseTasksMessage.classList.toggle('hidden', Object.keys(dateWiseTasks).length > 0 || dateWiseTasksList.children.length > 0);
 
-                const sortedPendingCategories = Object.keys(pendingTasksByCategory).sort();
-                sortedPendingCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'pending-category-border');
-                    categoryHeader.textContent = category;
-                    pendingTasksList.appendChild(categoryHeader);
 
-                    pendingTasksByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(
-                            taskData.text,
-                            taskData.deadline,
-                            taskData.notes,
-                            taskData.category,
-                            taskData.isDaily,
-                            taskData.isCompleted,
-                            taskData.id
-                        );
-                        pendingTasksList.appendChild(taskItem);
-                    });
-                });
+                // Render Completed Tasks
+                renderTasksSection(completedTasks, completedTasksList, 'completed-category-border');
+                noCompletedTasksMessage.classList.toggle('hidden', Object.keys(completedTasks).length > 0 || completedTasksList.children.length > 0);
 
-                const sortedAllCategories = Object.keys(allTasksNotCompletedByCategory).sort();
-                sortedAllCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'all-category-border');
-                    categoryHeader.textContent = category;
-                    allTasksList.appendChild(categoryHeader);
-
-                    allTasksNotCompletedByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(
-                            taskData.text,
-                            taskData.deadline,
-                            taskData.notes,
-                            taskData.category,
-                            taskData.isDaily,
-                            taskData.isCompleted,
-                            taskData.id
-                        );
-                        allTasksList.appendChild(taskItem);
-                    });
-                });
-
-                const sortedCompletedCategories = Object.keys(completedTasksByCategory).sort();
-                sortedCompletedCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'completed-category-border');
-                    categoryHeader.textContent = category;
-                    completedTasksList.appendChild(categoryHeader);
-
-                    completedTasksByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(
-                            taskData.text,
-                            taskData.deadline,
-                            taskData.notes,
-                            taskData.category,
-                            taskData.isDaily,
-                            taskData.isCompleted,
-                            taskData.id
-                        );
-                        completedTasksList.appendChild(taskItem);
-                    });
-                });
-
-                updateNoTasksMessages();
                 console.log("UI updated with tasks.");
             }, (error) => {
                 console.error("Error listening to tasks:", error);
@@ -536,24 +509,35 @@
             });
         }
 
-        // --- UI Update Functions ---
-        function updateNoTasksMessages() {
-            noDailyTasksMessage.classList.toggle('hidden', dailyTasksList.children.length > 0);
-            noPendingTasksMessage.classList.toggle('hidden', pendingTasksList.children.length > 0);
-            noCompletedTasksMessage.classList.toggle('hidden', completedTasksList.children.length > 0);
-            noAllTasksMessage.classList.toggle('hidden', allTasksList.children.length > 0);
+        function renderTasksSection(tasksByCategory, targetElement, borderColorClass) {
+            const sortedCategories = Object.keys(tasksByCategory).sort();
+            sortedCategories.forEach(category => {
+                const categoryHeader = document.createElement('h3');
+                categoryHeader.classList.add('category-header', borderColorClass);
+                categoryHeader.textContent = category;
+                targetElement.appendChild(categoryHeader);
+
+                tasksByCategory[category].forEach(taskData => {
+                    const taskItem = createTaskElement(
+                        taskData.text,
+                        taskData.deadline,
+                        taskData.notes,
+                        taskData.category,
+                        taskData.isUrgent,
+                        taskData.isCompleted,
+                        taskData.id
+                    );
+                    targetElement.appendChild(taskItem);
+                });
+            });
         }
 
         // Function to create a new task element (UI only)
-        function createTaskElement(taskText, deadline = '', notes = '', category = 'General', isDaily = false, isCompleted = false, docId = null) {
+        function createTaskElement(taskText, deadline = '', notes = '', category = 'General', isUrgent = false, isCompleted = false, docId = null) {
             const taskItem = document.createElement('div');
             taskItem.classList.add('task-item');
-            // Removed completed styling from here, it's now just a category
-            // if (isCompleted) {
-            //     taskItem.classList.add('completed');
-            // }
-            taskItem.dataset.daily = isDaily;
             taskItem.dataset.completed = isCompleted;
+            taskItem.dataset.urgent = isUrgent; // New dataset for urgent status
             taskItem.dataset.deadline = deadline;
             taskItem.dataset.notes = notes;
             taskItem.dataset.category = category;
@@ -600,34 +584,32 @@
             completeBtn.classList.add(
                 isCompleted ? 'bg-yellow-500' : 'bg-green-500',
                 'text-white',
-                'hover:bg-green-600',
-                'hover:bg-yellow-600',
+                isCompleted ? 'hover:bg-yellow-600' : 'hover:bg-green-600',
                 'focus:outline-none',
                 'focus:ring-2',
                 'focus:ring-offset-2',
-                'focus:ring-green-500'
+                isCompleted ? 'focus:ring-yellow-500' : 'focus:ring-green-500'
             );
             completeBtn.onclick = () => toggleComplete(taskItem);
             actionsDiv.appendChild(completeBtn);
 
-            // Only add "Move to Pending/Daily" if the task is NOT completed
+            // Add Move to Urgent/Remove from Urgent button, only if not completed
             if (!isCompleted) {
-                const moveBtn = document.createElement('button');
-                moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
-                moveBtn.classList.add(
-                    isDaily ? 'bg-purple-500' : 'bg-indigo-500',
+                const urgentBtn = document.createElement('button');
+                urgentBtn.textContent = isUrgent ? 'Remove from Urgent' : 'Move to Urgent';
+                urgentBtn.classList.add(
+                    isUrgent ? 'bg-indigo-500' : 'bg-red-500', // Different colors for distinction
                     'text-white',
-                    'hover:bg-purple-600',
-                    'hover:bg-indigo-600',
+                    isUrgent ? 'hover:bg-indigo-600' : 'hover:bg-red-600',
                     'focus:outline-none',
                     'focus:ring-2',
                     'focus:ring-offset-2',
-                    'focus:ring-purple-500'
+                    isUrgent ? 'focus:ring-indigo-500' : 'focus:ring-red-500'
                 );
-                moveBtn.onclick = () => moveTask(taskItem);
-                actionsDiv.appendChild(moveBtn);
+                urgentBtn.onclick = () => toggleUrgent(taskItem);
+                actionsDiv.appendChild(urgentBtn);
             }
-
+            
             const editNotesBtn = document.createElement('button');
             editNotesBtn.textContent = 'Edit Notes';
             editNotesBtn.classList.add(
@@ -675,7 +657,7 @@
             const taskText = newTaskInput.value.trim();
             const taskDeadline = taskDeadlineInput.value;
             const taskCategory = taskCategoryInput.value;
-            const taskNotes = ''; 
+            const taskNotes = ''; // New tasks start with empty notes
 
             if (taskText === '') {
                 alert('Please enter a task!');
@@ -689,15 +671,15 @@
                     deadline: taskDeadline,
                     notes: taskNotes,
                     category: taskCategory,
-                    isDaily: true,
+                    isUrgent: false, // New tasks are not urgent by default
                     isCompleted: false,
                     createdAt: serverTimestamp()
                 });
                 console.log("addTask: Document written with ID: ", docRef.id);
                 statusMessage.textContent = "Task added successfully!";
                 newTaskInput.value = '';
-                taskDeadlineInput.value = '';
-                taskCategoryInput.value = 'General';
+                taskDeadlineInput.value = ''; // Clear deadline input too
+                taskCategoryInput.value = 'General'; // Reset category to default
             } catch (error) {
                 console.error("addTask: Error adding document: ", error);
                 statusMessage.textContent = "Failed to add task!";
@@ -713,7 +695,8 @@
 
             try {
                 await updateDoc(docRef, {
-                    isCompleted: !isCompleted
+                    isCompleted: !isCompleted,
+                    isUrgent: false // When completed (or undone), remove from urgent
                 });
                 console.log("toggleComplete: Task status updated for ID:", taskItem.dataset.docId);
             } catch (error) {
@@ -722,20 +705,20 @@
             }
         }
 
-        async function moveTask(taskItem) {
+        async function toggleUrgent(taskItem) {
             if (!authReady || !taskItem.dataset.docId) return;
 
             const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, taskItem.dataset.docId);
-            const isDaily = taskItem.dataset.daily === 'true';
+            const isUrgent = taskItem.dataset.urgent === 'true';
 
             try {
                 await updateDoc(docRef, {
-                    isDaily: !isDaily
+                    isUrgent: !isUrgent
                 });
-                console.log("moveTask: Task category updated for ID:", taskItem.dataset.docId);
+                console.log("toggleUrgent: Task urgent status updated for ID:", taskItem.dataset.docId);
             } catch (error) {
-                console.error("Error moving document: ", error);
-                alert("Failed to move task. See console for details.");
+                console.error("Error updating document: ", error);
+                alert("Failed to update task urgent status. See console for details.");
             }
         }
 
@@ -781,7 +764,7 @@
                     notes: newNotes
                 });
                 console.log("saveNotes: Notes updated for ID:", currentTaskItemForNotes.dataset.docId);
-            }  catch (error) {
+            } catch (error) {
                 console.error("saveNotes: Error saving notes: ", error);
                 alert("Failed to save notes. See console for details.");
             } finally {
@@ -796,7 +779,7 @@
                 return;
             }
 
-            const headers = ["Task", "Deadline", "Category", "Notes", "Is Daily", "Is Completed", "Created At"];
+            const headers = ["Task", "Deadline", "Category", "Notes", "Is Urgent", "Is Completed", "Created At"];
             let csv = headers.join(",") + "\n";
 
             allTasksData.forEach(task => {
@@ -805,7 +788,7 @@
                     task.deadline || '',
                     task.category || 'General',
                     `"${task.notes ? task.notes.replace(/"/g, '""') : ''}"`,
-                    task.isDaily ? 'TRUE' : 'FALSE',
+                    task.isUrgent ? 'TRUE' : 'FALSE',
                     task.isCompleted ? 'TRUE' : 'FALSE',
                     task.createdAt ? new Date(task.createdAt.toDate()).toLocaleString() : ''
                 ];
@@ -817,7 +800,7 @@
             if (link.download !== undefined) {
                 const url = URL.createObjectURL(blob);
                 link.setAttribute("href", url);
-                link.setAttribute("download", "tasks.csv");
+                link.setAttribute("download", "anand_tasks.csv");
                 link.style.visibility = 'hidden';
                 document.body.appendChild(link);
                 link.click();
