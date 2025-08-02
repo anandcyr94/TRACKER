@@ -447,26 +447,26 @@
                 const dailyTasksForTodayByCategory = {};
                 const pendingTasksByCategory = {};
                 const completedTasksByCategory = {};
-                const urgentTasksByCategory = {}; // New: Urgent tasks by category
-                const allTasksNotCompletedByCategory = {};
+                const urgentTasksByCategory = {};
+                const allTasksNotCompletedByDate = {}; // New object for date-based grouping in "All Tasks"
 
                 tasks.forEach(taskData => {
                     const category = taskData.category || 'General';
 
-                    if (taskData.isDaily && taskData.deadline === todayFormatted && !taskData.isCompleted) {
+                    if (taskData.isDaily && taskData.deadline === todayFormatted && !taskData.isCompleted && !taskData.isUrgent) {
                         if (!dailyTasksForTodayByCategory[category]) {
                             dailyTasksForTodayByCategory[category] = [];
                         }
                         dailyTasksForTodayByCategory[category].push(taskData);
                     }
                     
-                    if (!taskData.isDaily && !taskData.isCompleted && !taskData.isUrgent) {
+                    if (!taskData.isCompleted && taskData.deadline && new Date(taskData.deadline + 'T00:00:00') < today) {
                         if (!pendingTasksByCategory[category]) {
                             pendingTasksByCategory[category] = [];
                         }
                         pendingTasksByCategory[category].push(taskData);
                     }
-
+                    
                     if (taskData.isUrgent && !taskData.isCompleted) {
                         if (!urgentTasksByCategory[category]) {
                             urgentTasksByCategory[category] = [];
@@ -481,11 +481,25 @@
                         completedTasksByCategory[category].push(taskData);
                     }
 
-                    if (!taskData.isCompleted) {
-                        if (!allTasksNotCompletedByCategory[category]) {
-                            allTasksNotCompletedByCategory[category] = [];
+                    // --- All Tasks Dashboard Logic ---
+                    if (!taskData.isCompleted && !taskData.isUrgent) {
+                        const taskDeadlineDate = taskData.deadline ? new Date(taskData.deadline + 'T00:00:00') : null;
+                        let dateCategory = 'No Deadline';
+
+                        if (taskDeadlineDate) {
+                            if (taskDeadlineDate < today) {
+                                dateCategory = 'Overdue';
+                            } else if (getFormattedDate(taskDeadlineDate) === todayFormatted) {
+                                dateCategory = 'Due Today';
+                            } else {
+                                dateCategory = 'Due Later';
+                            }
                         }
-                        allTasksNotCompletedByCategory[category].push(taskData);
+
+                        if (!allTasksNotCompletedByDate[dateCategory]) {
+                            allTasksNotCompletedByDate[dateCategory] = [];
+                        }
+                        allTasksNotCompletedByDate[dateCategory].push(taskData);
                     }
                 });
 
@@ -527,17 +541,20 @@
                     });
                 });
 
-                const sortedAllCategories = Object.keys(allTasksNotCompletedByCategory).sort();
-                sortedAllCategories.forEach(category => {
-                    const categoryHeader = document.createElement('h3');
-                    categoryHeader.classList.add('category-header', 'all-category-border');
-                    categoryHeader.textContent = category;
-                    allTasksList.appendChild(categoryHeader);
+                // Render "All Tasks" based on date categories
+                const dateCategoriesOrder = ['Overdue', 'Due Today', 'Due Later', 'No Deadline'];
+                dateCategoriesOrder.forEach(dateCategory => {
+                    if (allTasksNotCompletedByDate[dateCategory] && allTasksNotCompletedByDate[dateCategory].length > 0) {
+                        const categoryHeader = document.createElement('h3');
+                        categoryHeader.classList.add('category-header', 'all-category-border');
+                        categoryHeader.textContent = dateCategory;
+                        allTasksList.appendChild(categoryHeader);
 
-                    allTasksNotCompletedByCategory[category].forEach(taskData => {
-                        const taskItem = createTaskElement(taskData);
-                        allTasksList.appendChild(taskItem);
-                    });
+                        allTasksNotCompletedByDate[dateCategory].forEach(taskData => {
+                            const taskItem = createTaskElement(taskData);
+                            allTasksList.appendChild(taskItem);
+                        });
+                    }
                 });
                 
                 const sortedCompletedCategories = Object.keys(completedTasksByCategory).sort();
@@ -646,7 +663,7 @@
             completeBtn.onclick = () => toggleComplete(taskItem);
             actionsDiv.appendChild(completeBtn);
 
-            if (!isCompleted && !isUrgent) {
+            if (!isCompleted) {
                 const moveBtn = document.createElement('button');
                 moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
                 moveBtn.classList.add(
