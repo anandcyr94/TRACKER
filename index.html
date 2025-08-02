@@ -62,6 +62,9 @@
         .all-header {
             background-color: #9ca3af; /* gray-400 */
         }
+        .urgent-header {
+            background-color: #ef4444; /* Red for urgent */
+        }
         
         .task-item {
             background-color: #ffffff;
@@ -155,6 +158,34 @@
         .pending-category-border { border-color: #f87171; }
         .completed-category-border { border-color: #34d399; }
         .all-category-border { border-color: #9ca3af; }
+        .urgent-category-border { border-color: #ef4444; }
+
+        .dashboard-container {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .dashboards-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        .urgent-dashboard {
+            width: 25%;
+            min-width: 250px;
+            background-color: #fee2e2; /* Light red */
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+        }
+        @media (max-width: 1024px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            .urgent-dashboard {
+                width: 100%;
+            }
+        }
         
         @media (max-width: 768px) {
             .board-columns {
@@ -219,35 +250,34 @@
             </button>
         </div>
 
-        <div class="board-columns">
-            <div id="dailyTasksSection" class="column">
-                <div class="column-header daily-header">
-                    Daily Tasks (Today)
+        <div class="dashboard-container">
+            <div class="dashboards-grid">
+                <div id="dailyTasksSection" class="column">
+                    <div class="column-header daily-header">
+                        Daily Tasks (Today)
+                    </div>
+                    <div id="dailyTasksList" class="card-list">
+                    </div>
+                    <p id="noDailyTasks" class="text-gray-500 text-center mt-4 hidden">No daily tasks for today!</p>
                 </div>
-                <div id="dailyTasksList" class="card-list">
-                    <!-- Daily tasks for today will be appended here -->
+                
+                <div id="pendingTasksSection" class="column">
+                    <div class="column-header pending-header">
+                        Pending Tasks
+                    </div>
+                    <div id="pendingTasksList" class="card-list">
+                    </div>
+                    <p id="noPendingTasks" class="text-gray-500 text-center mt-4 hidden">No pending tasks yet!</p>
                 </div>
-                <p id="noDailyTasks" class="text-gray-500 text-center mt-4 hidden">No daily tasks for today!</p>
             </div>
             
-            <div id="pendingTasksSection" class="column">
-                <div class="column-header pending-header">
-                    Pending Tasks
+            <div id="urgentTasksSection" class="column urgent-dashboard">
+                <div class="column-header urgent-header">
+                    Urgent Tasks
                 </div>
-                <div id="pendingTasksList" class="card-list">
-                    <!-- Pending tasks will be appended here -->
+                <div id="urgentTasksList" class="card-list">
                 </div>
-                <p id="noPendingTasks" class="text-gray-500 text-center mt-4 hidden">No pending tasks yet!</p>
-            </div>
-            
-            <div id="completedTasksSection" class="column">
-                <div class="column-header completed-header">
-                    Completed Tasks
-                </div>
-                <div id="completedTasksList" class="card-list">
-                    <!-- Completed tasks will be appended here -->
-                </div>
-                <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
+                <p id="noUrgentTasks" class="text-gray-500 text-center mt-4 hidden">No urgent tasks!</p>
             </div>
         </div>
 
@@ -259,9 +289,20 @@
                 </svg>
             </h2>
             <div id="allTasksList" class="space-y-3">
-                <!-- All tasks will be appended here -->
             </div>
             <p id="noAllTasks" class="text-gray-500 text-center mt-4 hidden">No tasks added yet!</p>
+        </div>
+
+        <div id="completedTasksSection" class="mt-8 p-6 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                Completed Tasks
+                <svg class="ml-2 w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.532-1.267-1.267a.75.75 0 00-1.06 1.06l1.75 1.75a.75.75 0 001.135-.082l3.75-5.25z" clip-rule="evenodd" />
+                </svg>
+            </h2>
+            <div id="completedTasksList" class="space-y-3">
+            </div>
+            <p id="noCompletedTasks" class="text-gray-500 text-center mt-4 hidden">No completed tasks yet!</p>
         </div>
     </div>
 
@@ -355,11 +396,13 @@
                 const pendingTasksList = document.getElementById('pendingTasksList');
                 const completedTasksList = document.getElementById('completedTasksList');
                 const allTasksList = document.getElementById('allTasksList');
+                const urgentTasksList = document.getElementById('urgentTasksList');
 
                 dailyTasksList.innerHTML = '';
                 pendingTasksList.innerHTML = '';
                 completedTasksList.innerHTML = '';
                 allTasksList.innerHTML = '';
+                urgentTasksList.innerHTML = '';
 
                 const tasks = [];
                 snapshot.forEach(doc => {
@@ -404,6 +447,7 @@
                 const dailyTasksForTodayByCategory = {};
                 const pendingTasksByCategory = {};
                 const completedTasksByCategory = {};
+                const urgentTasksByCategory = {}; // New: Urgent tasks by category
                 const allTasksNotCompletedByCategory = {};
 
                 tasks.forEach(taskData => {
@@ -416,11 +460,18 @@
                         dailyTasksForTodayByCategory[category].push(taskData);
                     }
                     
-                    if (!taskData.isDaily && !taskData.isCompleted) {
+                    if (!taskData.isDaily && !taskData.isCompleted && !taskData.isUrgent) {
                         if (!pendingTasksByCategory[category]) {
                             pendingTasksByCategory[category] = [];
                         }
                         pendingTasksByCategory[category].push(taskData);
+                    }
+
+                    if (taskData.isUrgent && !taskData.isCompleted) {
+                        if (!urgentTasksByCategory[category]) {
+                            urgentTasksByCategory[category] = [];
+                        }
+                        urgentTasksByCategory[category].push(taskData);
                     }
 
                     if (taskData.isCompleted) {
@@ -461,6 +512,18 @@
                     pendingTasksByCategory[category].forEach(taskData => {
                         const taskItem = createTaskElement(taskData);
                         pendingTasksList.appendChild(taskItem);
+                    });
+                });
+
+                const sortedUrgentCategories = Object.keys(urgentTasksByCategory).sort();
+                sortedUrgentCategories.forEach(category => {
+                    const categoryHeader = document.createElement('h3');
+                    categoryHeader.classList.add('category-header', 'urgent-category-border');
+                    categoryHeader.textContent = category;
+                    urgentTasksList.appendChild(categoryHeader);
+                    urgentTasksByCategory[category].forEach(taskData => {
+                        const taskItem = createTaskElement(taskData);
+                        urgentTasksList.appendChild(taskItem);
                     });
                 });
 
@@ -508,15 +571,17 @@
             const noPendingTasksMessage = document.getElementById('noPendingTasks');
             const noCompletedTasksMessage = document.getElementById('noCompletedTasks');
             const noAllTasksMessage = document.getElementById('noAllTasks');
+            const noUrgentTasksMessage = document.getElementById('noUrgentTasks');
             
             noDailyTasksMessage.classList.toggle('hidden', document.getElementById('dailyTasksList').children.length > 0);
             noPendingTasksMessage.classList.toggle('hidden', document.getElementById('pendingTasksList').children.length > 0);
             noCompletedTasksMessage.classList.toggle('hidden', document.getElementById('completedTasksList').children.length > 0);
             noAllTasksMessage.classList.toggle('hidden', document.getElementById('allTasksList').children.length > 0);
+            noUrgentTasksMessage.classList.toggle('hidden', document.getElementById('urgentTasksList').children.length > 0);
         }
 
         function createTaskElement(taskData) {
-            const { text, deadline = '', notes = '', category = 'General', isDaily = false, isCompleted = false, id: docId } = taskData;
+            const { text, deadline = '', notes = '', category = 'General', isDaily = false, isCompleted = false, isUrgent = false, id: docId } = taskData;
             
             const taskItem = document.createElement('div');
             taskItem.classList.add('task-item');
@@ -525,6 +590,7 @@
             taskItem.dataset.deadline = deadline;
             taskItem.dataset.notes = notes;
             taskItem.dataset.category = category;
+            taskItem.dataset.urgent = isUrgent;
             taskItem.dataset.docId = docId;
 
             const taskContentDiv = document.createElement('div');
@@ -580,7 +646,7 @@
             completeBtn.onclick = () => toggleComplete(taskItem);
             actionsDiv.appendChild(completeBtn);
 
-            if (!isCompleted) {
+            if (!isCompleted && !isUrgent) {
                 const moveBtn = document.createElement('button');
                 moveBtn.textContent = isDaily ? 'Move to Pending' : 'Move to Daily';
                 moveBtn.classList.add(
@@ -595,6 +661,14 @@
                 );
                 moveBtn.onclick = () => moveTask(taskItem);
                 actionsDiv.appendChild(moveBtn);
+            }
+            
+            if (!isCompleted && !isUrgent) {
+                const urgentBtn = document.createElement('button');
+                urgentBtn.textContent = 'Make Urgent';
+                urgentBtn.classList.add('bg-red-600', 'text-white', 'hover:bg-red-700', 'focus:outline-none', 'focus:ring-2', 'focus:ring-offset-2', 'focus:ring-red-600');
+                urgentBtn.onclick = () => makeUrgent(taskItem);
+                actionsDiv.appendChild(urgentBtn);
             }
 
             const deleteBtn = document.createElement('button');
@@ -632,17 +706,14 @@
                 if (newDeadline !== oldDeadline) {
                     await updateTaskDeadline(taskItem, newDeadline);
                 }
-                // Replace the input with the text display after selection
                 deadlineDisplayElement.textContent = newDeadline ? `Due: ${new Date(newDeadline + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'No deadline';
                 deadlineDisplayElement.onclick = () => editDate(taskItem, deadlineDisplayElement);
             });
             dateInput.addEventListener('blur', () => {
-                // If the user clicks away, just revert to the original text
                 deadlineDisplayElement.textContent = oldDeadline ? `Due: ${new Date(oldDeadline + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'No deadline';
                 deadlineDisplayElement.onclick = () => editDate(taskItem, deadlineDisplayElement);
             });
 
-            // Replace the text element with the input
             deadlineDisplayElement.parentNode.replaceChild(dateInput, deadlineDisplayElement);
             dateInput.focus();
         }
@@ -685,6 +756,7 @@
                     category: taskCategory,
                     isDaily: true,
                     isCompleted: false,
+                    isUrgent: false, // New field for urgent tasks
                     createdAt: serverTimestamp()
                 });
                 document.getElementById('newTaskInput').value = '';
@@ -720,11 +792,27 @@
 
             try {
                 await updateDoc(docRef, {
-                    isDaily: !isDaily
+                    isDaily: !isDaily,
+                    isUrgent: false // Ensure it's not urgent if moved to daily/pending
                 });
             } catch (error) {
                 console.error("Error moving document: ", error);
                 alert("Failed to move task. See console for details.");
+            }
+        }
+
+        async function makeUrgent(taskItem) {
+            if (!authReady || !taskItem.dataset.docId) return;
+
+            const docRef = doc(db, `artifacts/${appId}/public/data/tasks`, taskItem.dataset.docId);
+            try {
+                await updateDoc(docRef, {
+                    isUrgent: true,
+                    isDaily: false // Urgent tasks are not daily or pending
+                });
+            } catch (error) {
+                console.error("Error making task urgent:", error);
+                alert("Failed to mark task as urgent. See console for details.");
             }
         }
 
@@ -747,7 +835,7 @@
                 return;
             }
 
-            const headers = ["Task", "Deadline", "Category", "Notes", "Is Daily", "Is Completed", "Created At"];
+            const headers = ["Task", "Deadline", "Category", "Notes", "Is Daily", "Is Completed", "Created At", "Is Urgent"];
             let csv = headers.join(",") + "\n";
 
             allTasksData.forEach(task => {
@@ -758,6 +846,7 @@
                     `"${task.notes ? task.notes.replace(/"/g, '""') : ''}"`,
                     task.isDaily ? 'TRUE' : 'FALSE',
                     task.isCompleted ? 'TRUE' : 'FALSE',
+                    task.isUrgent ? 'TRUE' : 'FALSE',
                     task.createdAt ? new Date(task.createdAt.toDate()).toLocaleString() : ''
                 ];
                 csv += row.join(",") + "\n";
